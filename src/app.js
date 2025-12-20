@@ -6,11 +6,15 @@ const config = require('./config/config');
 const routes = require('./routes');
 const errorHandler = require('./middleware/errorHandler');
 const { notFound } = require('./middleware/notFound');
+const { apiLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 
 // Security middleware
 app.use(helmet());
+
+// Rate limiting
+app.use('/api', apiLimiter);
 
 // CORS configuration
 app.use(cors({

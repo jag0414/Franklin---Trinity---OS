@@ -2,9 +2,11 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const auth = require('../middleware/auth');
+const { dbLimiter } = require('../middleware/rateLimiter');
 
-// All user routes require authentication
+// All user routes require authentication and rate limiting
 router.use(auth);
+router.use(dbLimiter);
 
 router.get('/', userController.getAllUsers);
 router.get('/:id', userController.getUserById);

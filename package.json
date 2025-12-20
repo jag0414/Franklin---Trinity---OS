@@ -28,7 +28,8 @@
     "mongoose": "^7.5.0",
     "morgan": "^1.10.0",
     "helmet": "^7.0.0",
-    "express-validator": "^7.0.1"
+    "express-validator": "^7.0.1",
+    "express-rate-limit": "^7.1.5"
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
