@@ -4,14 +4,16 @@ const config = require('../config/config');
 const auth = async (req, res, next) => {
   try {
     // Get token from header
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-
-    if (!token) {
+    const authHeader = req.header('Authorization');
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         success: false,
         error: 'Access denied. No token provided.'
       });
     }
+
+    const token = authHeader.replace('Bearer ', '');
 
     // Verify token
     const decoded = jwt.verify(token, config.jwt.secret);

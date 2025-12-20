@@ -63,7 +63,7 @@ exports.login = async (req, res, next) => {
       });
     }
 
-    // Find user
+    // Find user and explicitly select password field (excluded by default in User model)
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
       return res.status(401).json({

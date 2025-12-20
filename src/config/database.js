@@ -3,12 +3,8 @@ const config = require('./config');
 
 const connectDB = async () => {
   try {
-    const options = {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    };
-
-    await mongoose.connect(config.database.uri, options);
+    // No options needed - useNewUrlParser and useUnifiedTopology are default in Mongoose 6+
+    await mongoose.connect(config.database.uri);
     
     console.log('✅ MongoDB connected successfully');
     console.log(`📊 Database: ${mongoose.connection.name}`);
