@@ -11,6 +11,7 @@ Franklin Trinity OS is a comprehensive backend system designed as a sovereign op
 - 🔐 **JWT Authentication** - Secure token-based authentication
 - 👥 **User Management** - Complete CRUD operations for users
 - 🛡️ **Security** - Helmet.js for security headers, password hashing with bcrypt
+- 🚦 **Rate Limiting** - Protection against brute force and DDoS attacks
 - 📊 **System Monitoring** - Real-time system status and information endpoints
 - 🗄️ **Database** - MongoDB integration with Mongoose ODM
 - ✅ **Validation** - Input validation and error handling
@@ -194,6 +195,10 @@ The API uses consistent error responses:
 - JWT tokens for stateless authentication
 - Helmet.js for security headers
 - CORS configuration
+- Rate limiting to prevent abuse:
+  - General API: 100 requests per 15 minutes
+  - Authentication endpoints: 5 requests per 15 minutes
+  - Database operations: 50 requests per 15 minutes
 - Input validation
 - Environment variables for sensitive data
 
