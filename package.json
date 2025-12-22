@@ -9,7 +9,13 @@
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "lint": "eslint src/**/*.js",
-    "lint:fix": "eslint src/**/*.js --fix"
+    "lint:fix": "eslint src/**/*.js --fix",
+    "docker:build": "docker build -t franklin-trinity-os .",
+    "docker:run": "docker-compose up -d",
+    "docker:stop": "docker-compose down",
+    "docker:logs": "docker-compose logs -f backend",
+    "security:audit": "npm audit",
+    "security:fix": "npm audit fix"
   },
   "keywords": [
     "os",

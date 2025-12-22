@@ -225,6 +225,27 @@ This project is licensed under the ISC License - see the LICENSE file for detail
 
 For issues and questions, please open an issue on GitHub.
 
+## Production Deployment
+
+📚 **Before deploying to production, please review:**
+- [DEPLOYMENT.md](./DEPLOYMENT.md) - Complete deployment guide
+- [SECURITY.md](./SECURITY.md) - Security best practices
+- [PRODUCTION_CHECKLIST.md](./PRODUCTION_CHECKLIST.md) - Pre-deployment checklist
+
+**Quick production deployment with Docker:**
+```bash
+# Copy and configure production environment
+cp .env.production.template .env.production
+# Edit .env.production with your settings
+
+# Start with Docker Compose
+docker-compose up -d
+
+# Check status
+docker-compose ps
+docker-compose logs -f backend
+```
+
 ## Contributors
 
 - Project maintainers and contributors
