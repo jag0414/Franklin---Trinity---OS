@@ -81,10 +81,16 @@ if command_exists python3; then
         
         # Activate virtual environment
         echo "Activating virtual environment..."
-        source venv/bin/activate || . venv/Scripts/activate 2>/dev/null || {
-            echo -e "${YELLOW}⚠ Could not activate virtual environment automatically${NC}"
-            echo "Please run: source venv/bin/activate (Linux/Mac) or venv\\Scripts\\activate (Windows)"
-        }
+        if [ -f "venv/bin/activate" ]; then
+            source venv/bin/activate
+        elif [ -f "venv/Scripts/activate" ]; then
+            source venv/Scripts/activate
+        else
+            echo -e "${YELLOW}⚠ Could not find virtual environment activation script${NC}"
+            echo "Please activate manually:"
+            echo "  Linux/Mac: source venv/bin/activate"
+            echo "  Windows:   venv\\Scripts\\activate"
+        fi
         
         # Install dependencies
         echo "Installing Python dependencies..."
