@@ -31,7 +31,7 @@ COPY tests ./tests
 RUN mkdir -p /app/uploads
 
 # Railway/Heroku provide the PORT env var
-ENV PORT=8000
+ENV PORT=8080
 EXPOSE $PORT
 
 CMD ["sh", "-c", "python -m uvicorn app:app --host 0.0.0.0 --port ${PORT}"]
