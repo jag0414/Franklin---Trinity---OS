@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
 yarn.lock
 
 # Environment variables
@@ -15,12 +14,17 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+trinity_log.json
+trinity_telemetry.log
+trinity_requests.log
+trinity_background_tasks.log
 
 # Runtime data
 pids
 *.pid
 *.seed
 *.pid.lock
+.run/
 
 # Coverage directory used by tools like istanbul
 coverage/
@@ -45,3 +49,22 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads
+uploads/*
+!uploads/.gitkeep
