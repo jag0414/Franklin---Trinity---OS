@@ -18,7 +18,34 @@ cd Franklin---Trinity---OS
 ```
 
 2. **Start the system (easiest method):**
+
+**On Windows (PowerShell):**
+```powershell
+# Open PowerShell in the project directory
+# Right-click on the folder and select "Open in Terminal" or "Open PowerShell window here"
+# Or open PowerShell and navigate to the project folder:
+cd path\to\Franklin---Trinity---OS
+
+# Run the startup script
+.\start.ps1
+```
+
+**On Linux/Mac (Terminal/Bash):**
 ```bash
+# Open Terminal in the project directory
+# Or navigate to the project folder:
+cd /path/to/Franklin---Trinity---OS
+
+# Make the script executable (first time only)
+chmod +x start.sh
+
+# Run the startup script
+./start.sh
+```
+
+**Alternative - Using Git Bash on Windows:**
+```bash
+# If you have Git Bash installed on Windows, you can also use:
 chmod +x start.sh
 ./start.sh
 ```
@@ -190,6 +217,30 @@ npm run lint
 
 ## 🔧 Troubleshooting
 
+### Running on Different Platforms
+
+**Windows Users:**
+- Use PowerShell (not Command Prompt): `.\start.ps1`
+- **Do NOT** try to run `start.sh` in PowerShell - it won't work
+- If you have Git Bash installed, you can use `./start.sh` in Git Bash instead
+- You can also run commands from Visual Studio Code's integrated terminal (use PowerShell or Git Bash)
+
+**Windows - Opening PowerShell in the Project Directory:**
+1. Open File Explorer and navigate to the project folder
+2. Click on the address bar and type `powershell`, then press Enter
+3. Or Shift + Right-click in the folder and select "Open PowerShell window here"
+4. Run `.\start.ps1`
+
+**Linux/Mac Users:**
+- Use Terminal or any bash-compatible shell: `./start.sh`
+- Make sure the script is executable first: `chmod +x start.sh`
+
+**Visual Studio Code:**
+- Open the integrated terminal (View → Terminal or Ctrl+`)
+- On Windows: Make sure the terminal is set to PowerShell, then run `.\start.ps1`
+- On Linux/Mac: Use the default terminal and run `./start.sh`
+- You can change terminal type in VS Code by clicking the dropdown next to the + icon in the terminal
+
 ### Port Already in Use
 ```bash
 # Change the backend port
@@ -249,6 +300,12 @@ See LICENSE file for details.
 
 ## 🚀 Get Started Now
 
+**Windows (PowerShell):**
+```powershell
+.\start.ps1
+```
+
+**Linux/Mac/Git Bash:**
 ```bash
 ./start.sh
 ```
