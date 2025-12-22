@@ -1,0 +1,27 @@
+name: Generate SDK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate-sdk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install generator
+        run: |
+          npm install -g @openapitools/openapi-generator-cli || true
+      - name: Generate SDK
+        run: |
+          cd legacy_import/franklin_backend
+          bash scripts/generate_sdk.sh
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdk-generated
+          path: |
+            legacy_import/franklin_backend/sdk
