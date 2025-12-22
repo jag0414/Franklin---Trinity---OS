@@ -17,15 +17,7 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy app code
-COPY app.py ./
-COPY trinity_orchestrator_unified.py ./
-COPY trinity_mothership.py ./
-COPY telemetry.py ./
-COPY config.py ./
-COPY index.html ./
-COPY middleware ./middleware
-COPY routers ./routers
-COPY tests ./tests
+COPY . .
 
 # uploads folder will be mounted as a volume in compose
 RUN mkdir -p /app/uploads
