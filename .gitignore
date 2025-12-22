@@ -45,3 +45,16 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# Visual Studio
+.vs/
+*.user
+*.suo

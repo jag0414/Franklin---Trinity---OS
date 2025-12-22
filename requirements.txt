@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+sqlmodel
+pyjwt
+httpx
+pydantic
+psycopg2-binary

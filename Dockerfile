@@ -30,7 +30,8 @@ COPY tests ./tests
 # uploads folder will be mounted as a volume in compose
 RUN mkdir -p /app/uploads
 
-EXPOSE 8090
-ENV PORT=8090
+# Railway/Heroku provide the PORT env var
+ENV PORT=8000
+EXPOSE $PORT
 
-CMD ["python", "-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8090"]
+CMD ["sh", "-c", "python -m uvicorn app:app --host 0.0.0.0 --port ${PORT}"]
