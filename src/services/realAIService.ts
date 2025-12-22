@@ -31,7 +31,7 @@ export class RealAIService {
   private async checkSupabaseConnection() {
     try {
       const { error } = await supabase.from('agent_tasks').select('count').limit(1);
-      if (error && error.message.includes('relation') || error?.code === 'PGRST116') {
+      if (error && (error.message.includes('relation') || error?.code === 'PGRST116')) {
         console.warn('Supabase not fully configured, using mock data');
         this.useMockData = true;
       }
@@ -43,18 +43,25 @@ export class RealAIService {
 
   // Mock AI response for demo purposes
   private generateMockResponse(provider: string, prompt: string): AIResponse {
-    const responses = {
+    const responses: Record<string, string> = {
       openai: `Based on your query about "${prompt.substring(0, 50)}...", here's a comprehensive analysis:\n\n1. This demonstrates the Franklin OS AI capabilities\n2. The system integrates multiple AI providers\n3. Real-time processing with advanced orchestration\n\nThis is a demo response. To enable real AI, configure your API keys in the environment variables.`,
       anthropic: `Claude's perspective on "${prompt.substring(0, 50)}...":\n\nI've analyzed your request and can provide detailed insights. The Franklin OS platform supports multi-provider AI orchestration, allowing seamless integration with various AI models.\n\nDemo mode: Configure ANTHROPIC_API_KEY for live responses.`,
       google: `Gemini analysis of "${prompt.substring(0, 50)}...":\n\nMultimodal processing capabilities enabled. The Franklin OS ecosystem provides:\n- Real-time AI orchestration\n- Multi-agent collaboration\n- Advanced voice integration\n\nDemo mode active. Add GOOGLE_API_KEY for production use.`
+    };
+
+    const content = responses[provider] || responses.openai;
+    const models: Record<string, string> = {
+      openai: 'gpt-4',
+      anthropic: 'claude-3',
+      google: 'gemini-pro'
     };
 
     return {
       success: true,
       data: {
         provider: provider,
-        content: responses[provider] || responses.openai,
-        model: provider === 'openai' ? 'gpt-4' : provider === 'anthropic' ? 'claude-3' : 'gemini-pro'
+        content: content,
+        model: models[provider] || 'demo-model'
       }
     };
   }

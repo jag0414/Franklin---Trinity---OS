@@ -49,11 +49,17 @@ mkdir -p .run
 cleanup() {
     echo -e "\n${YELLOW}🛑 Shutting down services...${NC}"
     if [ -f .run/backend.pid ]; then
-        kill $(cat .run/backend.pid) 2>/dev/null || true
+        BACKEND_PID=$(cat .run/backend.pid)
+        if [ -n "$BACKEND_PID" ] && kill -0 "$BACKEND_PID" 2>/dev/null; then
+            kill "$BACKEND_PID" 2>/dev/null || true
+        fi
         rm .run/backend.pid
     fi
     if [ -f .run/frontend.pid ]; then
-        kill $(cat .run/frontend.pid) 2>/dev/null || true
+        FRONTEND_PID=$(cat .run/frontend.pid)
+        if [ -n "$FRONTEND_PID" ] && kill -0 "$FRONTEND_PID" 2>/dev/null; then
+            kill "$FRONTEND_PID" 2>/dev/null || true
+        fi
         rm .run/frontend.pid
     fi
     echo -e "${GREEN}✓ Services stopped${NC}"
