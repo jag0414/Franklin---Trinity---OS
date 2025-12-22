@@ -2,6 +2,15 @@
 node_modules/
 yarn.lock
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+
 # Environment variables
 .env
 .env.local
