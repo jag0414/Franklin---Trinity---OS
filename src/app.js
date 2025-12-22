@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const mongoose = require('mongoose');
 const config = require('./config/config');
 const routes = require('./routes');
 const errorHandler = require('./middleware/errorHandler');
@@ -33,8 +34,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health check endpoint
 app.get('/health', async (req, res) => {
-  const mongoose = require('mongoose');
-  
   const healthStatus = {
     status: 'ok',
     timestamp: new Date().toISOString(),

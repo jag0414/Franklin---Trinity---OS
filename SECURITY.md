@@ -355,6 +355,6 @@ Ensure you understand and implement required controls for your industry.
 
 For security concerns or to report vulnerabilities:
 - Open a security advisory on GitHub (recommended)
-- Email: [security contact email]
+- Email: security@yourdomain.com (update with actual security contact)
 
 **Please report security issues responsibly and allow time for fixes before public disclosure.**
