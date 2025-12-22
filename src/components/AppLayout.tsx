@@ -3,7 +3,8 @@ import {
   Shield, Cpu, Cloud, Server, Lock, Zap, 
   Network, Database, Code, Globe, Activity,
   ChevronRight, CheckCircle, AlertCircle, Play,
-  Layers, GitBranch, Terminal, Sparkles, Brain
+  Layers, GitBranch, Terminal, Sparkles, Brain, 
+  Image as ImageIcon, FileText
 } from 'lucide-react';
 import ParticleBackground from '@/components/ParticleBackground';
 import MultiAgentCollaboration from '@/components/MultiAgentCollaboration';
@@ -16,6 +17,8 @@ import DeploymentWizard from './DeploymentWizard';
 import WebSocketManager from './WebSocketManager';
 import TaskFlowDiagram from './TaskFlowDiagram';
 import AICommandCenter from './AICommandCenter';
+import MultiModalGenerator from './MultiModalGenerator';
+import BidNovaManager from './BidNovaManager';
 
 const AppLayout = () => {
   const [activeSection, setActiveSection] = useState('overview');
@@ -123,17 +126,27 @@ const AppLayout = () => {
               <Cpu className="w-6 h-6 text-blue-400" />
               <span className="font-bold text-xl">Franklin OS</span>
             </div>
-            <div className="flex gap-8">
-              {['AI Center', 'Orchestrator', 'Sovereignty', 'Security', 'Deploy'].map((item) => (
-                <button
-                  key={item}
-                  onClick={() => scrollToSection(item.toLowerCase().replace(' ', '-'))}
-                  className="text-gray-400 hover:text-white transition-colors flex items-center gap-1"
-                >
-                  {item === 'AI Center' && <Brain className="w-4 h-4" />}
-                  {item}
-                </button>
-              ))}
+            <div className="flex gap-6 text-sm">
+              {[
+                { name: 'AI Center', icon: Brain }, 
+                { name: 'Multimodal', icon: ImageIcon },
+                { name: 'BidNova', icon: FileText },
+                { name: 'Orchestrator', icon: null },
+                { name: 'Security', icon: null },
+                { name: 'Deploy', icon: null }
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.name}
+                    onClick={() => scrollToSection(item.name.toLowerCase().replace(' ', '-'))}
+                    className="text-gray-400 hover:text-white transition-colors flex items-center gap-1"
+                  >
+                    {Icon && <Icon className="w-4 h-4" />}
+                    {item.name}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -141,6 +154,16 @@ const AppLayout = () => {
       {/* AI Command Center - REAL AI Integration */}
       <section id="ai-center" className="py-20 bg-gradient-to-b from-purple-950/20 to-gray-950">
         <AICommandCenter />
+      </section>
+
+      {/* Multimodal AI Generator Section */}
+      <section id="multimodal" className="py-20 bg-gradient-to-b from-gray-950 to-purple-950/10">
+        <MultiModalGenerator />
+      </section>
+
+      {/* BidNova Contract Management Section */}
+      <section id="bidnova" className="py-20 bg-gradient-to-b from-purple-950/10 to-gray-950">
+        <BidNovaManager />
       </section>
 
       {/* Agent Orchestrator Section */}
