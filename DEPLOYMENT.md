@@ -356,7 +356,7 @@ VITE_API_URL=https://your-backend-api.com
 
 ### Security Checklist
 
-- [ ] Change `SECRET` in `app.py` (line 13)
+- [ ] Move `SECRET` from `app.py` to environment variables
 - [ ] Set strong `JWT_SECRET` in `.env`
 - [ ] Configure proper `CORS_ORIGIN`
 - [ ] Use HTTPS in production

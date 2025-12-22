@@ -204,10 +204,11 @@ Once the backend is running, visit:
 ## 🔐 Security Notes
 
 - Change default secrets in `.env` before deploying to production
-- Update `SECRET` in `app.py` (line 13)
-- Set strong `JWT_SECRET`
+- **IMPORTANT:** Move the `SECRET` variable from `app.py` to an environment variable
+- Set strong `JWT_SECRET` in environment variables
 - Configure proper CORS origins
 - Use environment-specific configurations
+- Never commit secrets to version control
 
 ## 🤝 Contributing
 

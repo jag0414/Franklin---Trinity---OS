@@ -132,9 +132,12 @@ VITE_API_URL=http://localhost:8090
 ### Backend (.env for Python)
 ```env
 PORT=8090
-JWT_SECRET=your-secret-key-here
+SECRET=your-secret-key-here
+JWT_SECRET=your-jwt-secret-key-here
 MONGODB_URI=your-mongodb-uri
 ```
+
+**Important:** Always use environment variables for secrets in production, never hardcode them in source files.
 
 ---
 
@@ -142,11 +145,12 @@ MONGODB_URI=your-mongodb-uri
 
 ⚠️ **Before deploying to production:**
 
-1. Change `SECRET` in `app.py` (line 13)
-2. Set a strong `JWT_SECRET` in `.env`
-3. Configure proper CORS origins
-4. Use HTTPS in production
-5. Don't commit `.env` files
+1. **Move all secrets to environment variables** - Never hardcode secrets in source files
+2. Set a strong `SECRET` environment variable (used in app.py)
+3. Set a strong `JWT_SECRET` in `.env`
+4. Configure proper CORS origins
+5. Use HTTPS in production
+6. Don't commit `.env` files
 
 ---
 

@@ -15,22 +15,29 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Function to check command exists
+command_exists() {
+    command -v "$1" &> /dev/null
+}
+
 # Check if Node.js is installed
-if ! command -v node &> /dev/null; then
+if ! command_exists node; then
     echo -e "${RED}❌ Node.js is not installed${NC}"
     echo "Please install Node.js 18+ from https://nodejs.org/"
     exit 1
 fi
 
-echo -e "${GREEN}✓ Node.js $(node -v) detected${NC}"
+NODE_VERSION=$(node -v)
+echo -e "${GREEN}✓ Node.js $NODE_VERSION detected${NC}"
 
 # Check if npm is installed
-if ! command -v npm &> /dev/null; then
+if ! command_exists npm; then
     echo -e "${RED}❌ npm is not installed${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}✓ npm $(npm -v) detected${NC}"
+NPM_VERSION=$(npm -v)
+echo -e "${GREEN}✓ npm $NPM_VERSION detected${NC}"
 echo ""
 
 # Install dependencies
@@ -55,34 +62,61 @@ echo ""
 
 # Check if Python is available for backend
 echo "🐍 Checking Python setup..."
-if command -v python3 &> /dev/null; then
-    echo -e "${GREEN}✓ Python3 $(python3 -V) detected${NC}"
+if command_exists python3; then
+    PYTHON_VERSION=$(python3 -V)
+    echo -e "${GREEN}✓ Python3 $PYTHON_VERSION detected${NC}"
     
     # Ask if user wants to start backend
     echo ""
     read -p "Do you want to install Python backend dependencies? (y/n) " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "Setting up Python virtual environment..."
+        
+        # Create virtual environment if it doesn't exist
+        if [ ! -d "venv" ]; then
+            python3 -m venv venv
+            echo -e "${GREEN}✓ Virtual environment created${NC}"
+        fi
+        
+        # Activate virtual environment
+        echo "Activating virtual environment..."
+        source venv/bin/activate || . venv/Scripts/activate 2>/dev/null || {
+            echo -e "${YELLOW}⚠ Could not activate virtual environment automatically${NC}"
+            echo "Please run: source venv/bin/activate (Linux/Mac) or venv\\Scripts\\activate (Windows)"
+        }
+        
+        # Install dependencies
         echo "Installing Python dependencies..."
-        pip3 install -r requirements.txt
-        echo -e "${GREEN}✓ Python dependencies installed${NC}"
+        if pip install -r requirements.txt; then
+            echo -e "${GREEN}✓ Python dependencies installed${NC}"
+            echo ""
+            echo -e "${YELLOW}Note: Virtual environment created at ./venv${NC}"
+            echo -e "${YELLOW}Activate it with: source venv/bin/activate${NC}"
+        else
+            echo -e "${RED}❌ Failed to install Python dependencies${NC}"
+        fi
     fi
 else
     echo -e "${YELLOW}⚠ Python3 not found. Backend will not be available.${NC}"
+    echo "Install Python 3.11+ from https://www.python.org/ to use the backend."
 fi
 
 echo ""
 echo "=============================="
 echo -e "${GREEN}🎉 Setup complete!${NC}"
 echo ""
-echo "To start the development server:"
-echo -e "${YELLOW}npm run dev${NC}"
+echo "Next steps:"
 echo ""
-echo "To start the backend (in a new terminal):"
-echo -e "${YELLOW}python3 -m uvicorn app:app --reload${NC}"
+echo "1. To start the development server:"
+echo -e "   ${YELLOW}npm run dev${NC}"
 echo ""
-echo "To preview the production build:"
-echo -e "${YELLOW}npm run preview${NC}"
+echo "2. To start the backend (in a new terminal):"
+echo -e "   ${YELLOW}source venv/bin/activate  # Activate virtual environment${NC}"
+echo -e "   ${YELLOW}python3 -m uvicorn app:app --reload${NC}"
+echo ""
+echo "3. To preview the production build:"
+echo -e "   ${YELLOW}npm run preview${NC}"
 echo ""
 echo "📚 For more information, see:"
 echo "  - README.md for full documentation"
