@@ -1,7 +1,18 @@
 # Dependencies
 node_modules/
-package-lock.json
 yarn.lock
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
 # Environment variables
 .env
