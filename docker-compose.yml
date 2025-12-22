@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: tic-api
+    restart: unless-stopped
+    env_file: .env
+    command: uvicorn trinity_intelligence_cloud.main:app --host 0.0.0.0 --port 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+      - minio
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    container_name: tic-worker
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - redis
+      - minio
+    deploy:
+      replicas: 3  # scale workers horizontally (use `docker compose up --scale worker=N` for overrides)
+
+  redis:
+    image: redis:7
+    container_name: tic-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  minio:
+    image: minio/minio
+    container_name: tic-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+
+volumes:
+  minio-data:
