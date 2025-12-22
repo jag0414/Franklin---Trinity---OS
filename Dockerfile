@@ -4,10 +4,10 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-# System deps for OCR and image libs
+# System deps (Removed heavy OCR/Image libs to fix OOM build errors)
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       tesseract-ocr libgl1 libglib2.0-0 curl \
+       curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
