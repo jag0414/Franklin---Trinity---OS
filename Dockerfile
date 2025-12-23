@@ -1,29 +1,42 @@
-# Trinity AI API container
-FROM python:3.11-slim
+# Multi-stage build for optimized production image
+FROM node:18-alpine AS base
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
-# System deps (Removed heavy OCR/Image libs to fix OOM build errors)
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-       curl \
-    && rm -rf /var/lib/apt/lists/*
-
+# Install dependencies only when needed
+FROM base AS deps
 WORKDIR /app
 
-# Copy requirements and install
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy package files
+COPY package*.json ./
 
-# Copy app code
-COPY . .
+# Install dependencies
+RUN npm ci --only=production && npm cache clean --force
 
-# uploads folder will be mounted as a volume in compose
-RUN mkdir -p /app/uploads
+# Production image
+FROM base AS runner
+WORKDIR /app
 
-# Railway/Heroku provide the PORT env var
-ENV PORT=8080
-EXPOSE $PORT
+# Create a non-root user for security
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 appuser
 
-CMD ["sh", "-c", "python -m uvicorn app:app --host 0.0.0.0 --port ${PORT}"]
+# Copy node modules from deps stage
+COPY --from=deps --chown=appuser:nodejs /app/node_modules ./node_modules
+
+# Copy application code
+COPY --chown=appuser:nodejs . .
+
+# Set environment to production
+ENV NODE_ENV=production
+
+# Switch to non-root user
+USER appuser
+
+# Expose the application port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); });"
+
+# Start the application
+CMD ["node", "src/server.js"]

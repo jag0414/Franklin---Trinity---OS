@@ -7,6 +7,7 @@ yarn.lock
 .env
 .env.local
 .env.*.local
+.env.production
 
 # Logs
 logs
@@ -46,15 +47,6 @@ Thumbs.db
 tmp/
 temp/
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-.venv/
-venv/
-ENV/
-
-# Visual Studio
-.vs/
-*.user
-*.suo
+# Uploads and user content
+uploads/
+backend/uploads/

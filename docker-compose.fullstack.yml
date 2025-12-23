@@ -36,7 +36,7 @@ services:
       MONGODB_URI: mongodb://mongodb:27017/franklin-trinity-os
       JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     depends_on:
       mongodb:
@@ -49,6 +49,26 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  # Frontend Application
+  frontend:
+    build:
+      context: ./orchestrate-autonomy-intelligence
+      dockerfile: Dockerfile
+    container_name: franklin-trinity-frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - franklin-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
 networks:
   franklin-network:

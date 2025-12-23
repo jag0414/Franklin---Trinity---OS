@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const mongoose = require('mongoose');
 const config = require('./config/config');
 const routes = require('./routes');
 const errorHandler = require('./middleware/errorHandler');
@@ -32,13 +33,25 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({
+app.get('/health', async (req, res) => {
+  const healthStatus = {
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: config.env
-  });
+    environment: config.env,
+    database: {
+      status: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+      name: mongoose.connection.name || 'N/A'
+    }
+  };
+  
+  // If database is not connected, return 503 Service Unavailable
+  if (mongoose.connection.readyState !== 1) {
+    healthStatus.status = 'degraded';
+    return res.status(503).json(healthStatus);
+  }
+  
+  res.status(200).json(healthStatus);
 });
 
 // API routes
