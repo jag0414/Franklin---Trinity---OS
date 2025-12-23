@@ -76,7 +76,9 @@ if (Test-Path "src/services/aiBackend.ts") {
     Write-Host "  📡 API Base URL configuration:" -ForegroundColor Cyan
     $content = Get-Content "src/services/aiBackend.ts" -Raw
     if ($content -match 'const API_BASE_URL =[\s\S]*?;') {
-        $matches[0].Split("`n") | ForEach-Object { Write-Host "     $_" -ForegroundColor Gray }
+        if ($matches -and $matches[0]) {
+            $matches[0].Split("`n") | ForEach-Object { Write-Host "     $_" -ForegroundColor Gray }
+        }
     }
 } else {
     Write-Host "  ❌ aiBackend.ts not found" -ForegroundColor Red
