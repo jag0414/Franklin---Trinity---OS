@@ -18,11 +18,18 @@ if (Test-Path "package.json") {
 # Check 2: Verify build script exists
 Write-Host ""
 Write-Host "✓ Checking build configuration..." -ForegroundColor Yellow
-$packageJson = Get-Content "package.json" -Raw
-if ($packageJson -match '"build".*"vite build"') {
-    Write-Host "  ✅ Build script configured" -ForegroundColor Green
+if (Test-Path "package.json") {
+    $packageJson = Get-Content "package.json" -Raw -ErrorAction SilentlyContinue
+    if ($packageJson -and $packageJson -match '"build".*"vite build"') {
+        Write-Host "  ✅ Build script configured" -ForegroundColor Green
+    } else {
+        Write-Host "  ❌ Build script not found" -ForegroundColor Red
+        $allChecks = $false
+    }
 } else {
-    Write-Host "  ❌ Build script not found" -ForegroundColor Red
+    Write-Host "  ❌ package.json not found" -ForegroundColor Red
+    $allChecks = $false
+}
     $allChecks = $false
 }
 
@@ -74,10 +81,11 @@ Write-Host "✓ Checking API integration..." -ForegroundColor Yellow
 if (Test-Path "src/services/aiBackend.ts") {
     Write-Host "  ✅ aiBackend.ts found" -ForegroundColor Green
     Write-Host "  📡 API Base URL configuration:" -ForegroundColor Cyan
-    $content = Get-Content "src/services/aiBackend.ts" -Raw
-    if ($content -match 'const API_BASE_URL =[\s\S]*?;') {
-        if ($matches -and $matches[0]) {
-            $matches[0].Split("`n") | ForEach-Object { Write-Host "     $_" -ForegroundColor Gray }
+    $content = Get-Content "src/services/aiBackend.ts" -Raw -ErrorAction SilentlyContinue
+    if ($content) {
+        $match = $content | Select-String -Pattern 'const API_BASE_URL =[\s\S]*?;' -AllMatches
+        if ($match -and $match.Matches -and $match.Matches.Count -gt 0) {
+            $match.Matches[0].Value.Split("`n") | ForEach-Object { Write-Host "     $_" -ForegroundColor Gray }
         }
     }
 } else {
