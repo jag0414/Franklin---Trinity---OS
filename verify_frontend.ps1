@@ -30,8 +30,6 @@ if (Test-Path "package.json") {
     Write-Host "  ❌ package.json not found" -ForegroundColor Red
     $allChecks = $false
 }
-    $allChecks = $false
-}
 
 # Check 3: Verify vite.config.ts exists
 Write-Host ""
