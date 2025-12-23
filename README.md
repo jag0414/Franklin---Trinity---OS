@@ -1,4 +1,4 @@
-# Franklin Trinity OS
+# React + TypeScript + Vite
 
 End to End Sovereign Operating System Backend
 

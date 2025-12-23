@@ -1,0 +1,32 @@
+name: OpenAPI Validate
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-openapi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r legacy_import/franklin_backend/requirements.txt || true
+      - name: Generate openapi
+        run: |
+          cd legacy_import/franklin_backend
+          python generate_openapi.py
+      - name: Check openapi committed
+        run: |
+          if ! git diff --quiet legacy_import/franklin_backend/openapi.json; then
+            echo "openapi.json is out of date. Regenerate and commit." >&2
+            git --no-pager diff legacy_import/franklin_backend/openapi.json || true
+            exit 1
+          fi
