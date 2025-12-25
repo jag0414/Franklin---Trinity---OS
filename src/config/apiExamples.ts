@@ -89,6 +89,7 @@ export function useBackendAPI() {
 /**
  * Usage in a React component:
  * 
+ * import { useEffect } from 'react';
  * import { useBackendAPI } from '@/config/apiExamples';
  * 
  * function MyComponent() {

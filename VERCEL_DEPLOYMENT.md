@@ -197,7 +197,7 @@ To use a custom domain:
 Once deployed, your Franklin Trinity OS frontend will be live at your Vercel URL, connected to your Railway backend, and automatically deploying on every push to `main`.
 
 **Your deployment URLs:**
-- **Frontend (Vercel)**: `https://franklin-trinity-os.vercel.app`
+- **Frontend (Vercel)**: `https://your-project-name.vercel.app` (assigned by Vercel)
 - **Backend (Railway)**: `https://franklin-trinity-os-roosevelt.up.railway.app`
 - **API Health**: `https://franklin-trinity-os-roosevelt.up.railway.app/health`
 
