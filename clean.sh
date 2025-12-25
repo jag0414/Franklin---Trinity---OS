@@ -23,9 +23,9 @@ echo ""
 
 # Remove Python cache
 echo "🐍 Removing Python cache..."
-find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null
-find . -type f -name "*.pyc" -delete 2>/dev/null
-find . -type f -name "*.pyo" -delete 2>/dev/null
+find . -type d -name "__pycache__" -prune -exec rm -rf {} + 2>/dev/null || true
+find . -type f -name "*.pyc" -delete 2>/dev/null || true
+find . -type f -name "*.pyo" -delete 2>/dev/null || true
 echo "✅ Python cache removed"
 echo ""
 
