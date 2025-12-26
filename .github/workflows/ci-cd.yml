@@ -23,10 +23,10 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     
     - name: Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
@@ -58,10 +58,10 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: 18.x
     
@@ -86,7 +86,7 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
@@ -121,16 +121,13 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     
-    - name: Deploy notification
+    - name: Deploy to Railway
       run: |
-        echo "Deploying to production..."
-        # Add your deployment commands here
-        # Examples:
-        # - Deploy to cloud platform (Heroku, AWS, GCP, Azure)
-        # - SSH to server and pull latest changes
-        # - Use deployment service API
+        echo "Deployment configured for Railway platform"
+        echo "Follow Railway deployment guide in FINAL_DEPLOYMENT_GUIDE.md"
+        echo "Manual deployment steps required - see documentation"
     
     - name: Deployment success notification
       if: success()
