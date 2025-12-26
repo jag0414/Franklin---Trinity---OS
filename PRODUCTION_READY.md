@@ -83,11 +83,13 @@ Expected: Real AI response from OpenAI (not mock).
 
 ## ?? Production URLs
 
-Once deployed:
-- **API Base**: `https://franklin-trinity-os-roosevelt.up.railway.app`
-- **Health Check**: `https://franklin-trinity-os-roosevelt.up.railway.app/health`
-- **API Docs**: `https://franklin-trinity-os-roosevelt.up.railway.app/docs` (FastAPI auto-docs)
-- **Pipelines**: `https://franklin-trinity-os-roosevelt.up.railway.app/api/ai/pipelines`
+Once deployed (replace with your Railway domain):
+- **API Base**: `https://your-app-name.up.railway.app`
+- **Health Check**: `https://your-app-name.up.railway.app/health`
+- **API Docs**: `https://your-app-name.up.railway.app/docs` (FastAPI auto-docs)
+- **Pipelines**: `https://your-app-name.up.railway.app/api/ai/pipelines`
+
+**Note:** Your actual Railway domain will be shown in your Railway dashboard after deployment.
 
 ---
 
