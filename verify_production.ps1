@@ -1,9 +1,28 @@
 # Franklin Trinity OS - Production Verification Script
 # Tests Railway deployment endpoints
+# Usage: .\verify_production.ps1
+#    Or: .\verify_production.ps1 -BaseUrl "https://your-app.up.railway.app"
 
 param(
-    [string]$BaseUrl = "https://franklin-trinity-os-production.up.railway.app"
+    [string]$BaseUrl
 )
+
+# If no URL provided, try to get from environment or prompt
+if (-not $BaseUrl) {
+    $BaseUrl = $env:RAILWAY_URL
+    if (-not $BaseUrl) {
+        Write-Host "Please provide your Railway deployment URL:" -ForegroundColor Yellow
+        Write-Host "Example: https://your-app-name.up.railway.app" -ForegroundColor Gray
+        $BaseUrl = Read-Host "Railway URL"
+        if (-not $BaseUrl) {
+            Write-Host "❌ No URL provided. Exiting." -ForegroundColor Red
+            exit 1
+        }
+    }
+}
+
+# Remove trailing slash if present
+$BaseUrl = $BaseUrl.TrimEnd('/')
 
 Write-Host "`n=== Franklin Trinity OS - Production Verification ===" -ForegroundColor Cyan
 Write-Host "Testing deployment at: $BaseUrl`n" -ForegroundColor White

@@ -41,40 +41,43 @@ Click **Add** after each one.
 - It should turn **Green (Active)** within 2-3 minutes
 
 ### Step 4: Verify Production
-Run this in PowerShell:
+Run this in PowerShell (it will prompt for your Railway URL):
 ```powershell
 .\verify_production.ps1
 ```
 
 Expected output:
 ```
-Verifying Production Deployment at: https://franklin-trinity-os-roosevelt.up.railway.app
-1. Checking Health...
-   OK
-2. Checking Pipelines...
-   OK (4 pipelines)
-Deployment Verification PASSED! ?
+=== Franklin Trinity OS - Production Verification ===
+Testing deployment at: https://your-app-name.up.railway.app
+
+1. Testing Health Endpoint...
+   ✅ Health check PASSED
+2. Testing Pipelines Endpoint...
+   ✅ Pipelines endpoint PASSED
+   
+Deployment Verification PASSED! 🎉
 ```
 
 ### Step 5: Deploy Frontend (Optional)
 When ready, deploy your React frontend to Vercel:
 1. Go to [Vercel.com](https://vercel.com/)
 2. Import: `jag0414/Franklin---Trinity---OS`
-3. Set environment variable: `VITE_API_BASE_URL=https://franklin-trinity-os-roosevelt.up.railway.app`
+3. Set environment variable: `VITE_API_BASE_URL=https://your-app-name.up.railway.app`
 4. Deploy!
 
 ---
 
-## ?? What You Now Have
+## 🎯 What You Now Have
 
 ### Backend (Railway)
-- **URL**: `https://franklin-trinity-os-roosevelt.up.railway.app`
-- **Health**: `https://franklin-trinity-os-roosevelt.up.railway.app/health`
+- **URL**: `https://your-app-name.up.railway.app` (shown in Railway dashboard)
+- **Health**: `https://your-app-name.up.railway.app/health`
 - **Mode**: Mock (without API keys) OR Real (with API keys in variables)
 - **Database**: PostgreSQL (connected via `FRANKLIN_DB_URL`)
 
 ### Frontend (Local Dev or Vercel)
-- **Dev**: `npm run dev` ? `http://localhost:5173`
+- **Dev**: `npm run dev` → `http://localhost:5173`
 - **Prod**: Deploy to Vercel (uses `vercel.json`)
 
 ### Local Testing
