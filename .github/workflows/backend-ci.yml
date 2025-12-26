@@ -31,11 +31,13 @@ jobs:
     
     - name: Check Python syntax
       run: |
+        echo "✅ Checking Python syntax for main files..."
         python -m py_compile app.py
         python -m py_compile config.py
         echo "✅ Python syntax check passed"
     
     - name: Verify imports
       run: |
+        echo "✅ Verifying main module imports..."
         python -c "import app; print('✅ app.py imports successfully')"
         python -c "import config; print('✅ config.py imports successfully')"
