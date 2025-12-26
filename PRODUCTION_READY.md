@@ -51,25 +51,34 @@ Go to **Deployments** tab:
 - This takes 2-3 minutes
 
 ### Step 4??: Verify Production is Live
-Run this in PowerShell:
+Run this in PowerShell (it will prompt for your Railway URL):
 ```powershell
 .\verify_production.ps1
 ```
 
+Or provide the URL directly:
+```powershell
+.\verify_production.ps1 -BaseUrl "https://your-app-name.up.railway.app"
+```
+
 Expected output:
 ```
-Verifying Production Deployment at: https://franklin-trinity-os-roosevelt.up.railway.app
-1. Checking Health...
-   OK
-2. Checking Pipelines...
-   OK (4 pipelines)
-Deployment Verification PASSED! ?
+=== Franklin Trinity OS - Production Verification ===
+Testing deployment at: https://your-app-name.up.railway.app
+
+1. Testing Health Endpoint...
+   ✅ Health check PASSED
+2. Testing Pipelines Endpoint...
+   ✅ Pipelines endpoint PASSED
+   
+Deployment Verification PASSED! 🎉
+Your Franklin Trinity OS is live and working!
 ```
 
 ### Step 5??: Test Real AI (Optional)
-Make a test request:
+Make a test request (replace with your Railway URL):
 ```powershell
-$response = Invoke-RestMethod -Uri "https://franklin-trinity-os-roosevelt.up.railway.app/api/ai/execute" `
+$response = Invoke-RestMethod -Uri "https://your-app-name.up.railway.app/api/ai/execute" `
   -Method POST `
   -Headers @{"Content-Type"="application/json"} `
   -Body '{"type":"text","prompt":"Hello, are you working?","provider":"openai"}'
@@ -83,11 +92,13 @@ Expected: Real AI response from OpenAI (not mock).
 
 ## ?? Production URLs
 
-Once deployed:
-- **API Base**: `https://franklin-trinity-os-roosevelt.up.railway.app`
-- **Health Check**: `https://franklin-trinity-os-roosevelt.up.railway.app/health`
-- **API Docs**: `https://franklin-trinity-os-roosevelt.up.railway.app/docs` (FastAPI auto-docs)
-- **Pipelines**: `https://franklin-trinity-os-roosevelt.up.railway.app/api/ai/pipelines`
+Once deployed (replace with your Railway domain):
+- **API Base**: `https://your-app-name.up.railway.app`
+- **Health Check**: `https://your-app-name.up.railway.app/health`
+- **API Docs**: `https://your-app-name.up.railway.app/docs` (FastAPI auto-docs)
+- **Pipelines**: `https://your-app-name.up.railway.app/api/ai/pipelines`
+
+**Note:** Your actual Railway domain will be shown in your Railway dashboard after deployment.
 
 ---
 

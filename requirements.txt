@@ -1,5 +1,7 @@
 fastapi
 uvicorn[standard]
+httpx
+sqlmodel
 openai
 anthropic
 google-genai
