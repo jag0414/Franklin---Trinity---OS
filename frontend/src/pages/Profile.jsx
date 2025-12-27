@@ -29,6 +29,7 @@ const Profile = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Profile update functionality not yet implemented
     setEditing(false);
   };
 
