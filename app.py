@@ -111,6 +111,65 @@ class Audit(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
+class CognitiveMemory(SQLModel, table=True):
+    """Cognitive remembrance system with timestamps for PFS, Air Weaver, or Raspberry Pi"""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    memory_key: str = Field(index=True)
+    memory_value: str
+    memory_type: str = Field(default="general")  # general | pfs | air_weaver | raspberry_pi
+    context: Optional[str] = None
+    embedding_vector: Optional[str] = None  # JSON string of vector for semantic search
+    access_count: int = Field(default=0)
+    last_accessed: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    expires_at: Optional[datetime] = None
+    metadata: Optional[str] = None  # JSON string for additional metadata
+
+
+class AIResponseCache(SQLModel, table=True):
+    """Cache AI responses to reduce API calls"""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    cache_key: str = Field(index=True, unique=True)  # Hash of prompt + provider + model
+    provider: str
+    model: str
+    prompt_hash: str = Field(index=True)
+    response_content: str
+    response_metadata: Optional[str] = None
+    hit_count: int = Field(default=0)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_hit: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    expires_at: datetime  # TTL for cache
+
+
+class WorkflowExecution(SQLModel, table=True):
+    """Track workflow executions"""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    workflow_id: str
+    workflow_name: str
+    input_data: str  # JSON
+    output_data: Optional[str] = None  # JSON
+    status: str = "pending"  # pending | running | completed | failed
+    container_id: Optional[str] = None  # For containerized workflows
+    error: Optional[str] = None
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    completed_at: Optional[datetime] = None
+
+
+class UploadedFile(SQLModel, table=True):
+    """Track uploaded files for pipeline processing"""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    file_uuid: str = Field(index=True, unique=True)
+    filename: str
+    file_path: str
+    file_size: int
+    file_type: str
+    uploaded_by: Optional[int] = None  # user_id
+    pipeline_id: Optional[str] = None
+    processed: bool = Field(default=False)
+    processing_result: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
 SQLModel.metadata.create_all(engine)
 
 # ---------------- HELPERS ----------------
@@ -146,6 +205,98 @@ def get_user(req: Request) -> User:
         if not user:
             raise HTTPException(401, "User not found")
         return user
+
+
+def generate_cache_key(prompt: str, provider: str, model: str) -> str:
+    """Generate a unique cache key for AI requests"""
+    import hashlib
+    content = f"{provider}:{model}:{prompt}"
+    return hashlib.sha256(content.encode()).hexdigest()
+
+
+def get_cached_response(prompt: str, provider: str, model: str) -> Optional[str]:
+    """Retrieve cached AI response if available and not expired"""
+    cache_key = generate_cache_key(prompt, provider, model)
+    with Session(engine) as s:
+        cache_entry = s.exec(select(AIResponseCache).where(AIResponseCache.cache_key == cache_key)).first()
+        if cache_entry and cache_entry.expires_at > datetime.now(timezone.utc):
+            # Update hit count and last hit time
+            cache_entry.hit_count += 1
+            cache_entry.last_hit = datetime.now(timezone.utc)
+            s.add(cache_entry)
+            s.commit()
+            return cache_entry.response_content
+    return None
+
+
+def cache_response(prompt: str, provider: str, model: str, response: str, ttl_hours: int = 24):
+    """Cache AI response with TTL"""
+    cache_key = generate_cache_key(prompt, provider, model)
+    import hashlib
+    prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()
+    
+    with Session(engine) as s:
+        # Check if entry exists
+        existing = s.exec(select(AIResponseCache).where(AIResponseCache.cache_key == cache_key)).first()
+        if existing:
+            # Update existing
+            existing.response_content = response
+            existing.hit_count = 0
+            existing.last_hit = datetime.now(timezone.utc)
+            existing.expires_at = datetime.now(timezone.utc) + timedelta(hours=ttl_hours)
+            s.add(existing)
+        else:
+            # Create new
+            cache_entry = AIResponseCache(
+                cache_key=cache_key,
+                provider=provider,
+                model=model,
+                prompt_hash=prompt_hash,
+                response_content=response,
+                expires_at=datetime.now(timezone.utc) + timedelta(hours=ttl_hours)
+            )
+            s.add(cache_entry)
+        s.commit()
+
+
+def store_memory(key: str, value: str, memory_type: str = "general", context: Optional[str] = None, 
+                 metadata: Optional[dict] = None, ttl_days: Optional[int] = None):
+    """Store cognitive memory with timestamp"""
+    with Session(engine) as s:
+        expires_at = datetime.now(timezone.utc) + timedelta(days=ttl_days) if ttl_days else None
+        memory = CognitiveMemory(
+            memory_key=key,
+            memory_value=value,
+            memory_type=memory_type,
+            context=context,
+            metadata=json.dumps(metadata) if metadata else None,
+            expires_at=expires_at
+        )
+        s.add(memory)
+        s.commit()
+        s.refresh(memory)
+        return memory
+
+
+def retrieve_memory(key: str, memory_type: Optional[str] = None) -> Optional[str]:
+    """Retrieve cognitive memory and update access tracking"""
+    with Session(engine) as s:
+        query = select(CognitiveMemory).where(CognitiveMemory.memory_key == key)
+        if memory_type:
+            query = query.where(CognitiveMemory.memory_type == memory_type)
+        
+        memory = s.exec(query).first()
+        if memory:
+            # Check if expired
+            if memory.expires_at and memory.expires_at < datetime.now(timezone.utc):
+                return None
+            # Update access tracking
+            memory.access_count += 1
+            memory.last_accessed = datetime.now(timezone.utc)
+            s.add(memory)
+            s.commit()
+            return memory.memory_value
+    return None
 
 
 # ---------------- AI MODELS ----------------
@@ -250,6 +401,20 @@ async def _with_limits(provider: str, coro):
 
 async def _call_openai(req: AIRequestModel) -> AIResponseModel:
     model = req.model or "gpt-4o-mini"
+    
+    # Check cache first to reduce API calls
+    cached = get_cached_response(req.prompt, "openai", model)
+    if cached:
+        print(f"Cache hit for OpenAI request {req.id}")
+        return AIResponseModel(
+            id=req.id,
+            provider="openai",
+            model=model,
+            type=req.type,
+            content=cached,
+            timestamp=_now_ms(),
+        )
+    
     if not is_key_valid(OPENAI_API_KEY):
         print(f"Warning: OPENAI_API_KEY missing or invalid. Returning mock response for {req.id}")
         await asyncio.sleep(0.5)
@@ -284,12 +449,17 @@ async def _call_openai(req: AIRequestModel) -> AIResponseModel:
         if resp.status_code >= 400:
             raise HTTPException(resp.status_code, resp.text)
         data = resp.json()
+        content = data["choices"][0]["message"]["content"]
+        
+        # Cache the response
+        cache_response(req.prompt, "openai", model, content, ttl_hours=24)
+        
         return AIResponseModel(
             id=req.id,
             provider="openai",
             model=model,
             type=req.type,
-            content=data["choices"][0]["message"]["content"],
+            content=content,
             timestamp=_now_ms(),
         )
 
@@ -298,6 +468,20 @@ async def _call_openai(req: AIRequestModel) -> AIResponseModel:
 
 async def _call_anthropic(req: AIRequestModel) -> AIResponseModel:
     model = req.model or "claude-3-5-sonnet-20241022"
+    
+    # Check cache first
+    cached = get_cached_response(req.prompt, "anthropic", model)
+    if cached:
+        print(f"Cache hit for Anthropic request {req.id}")
+        return AIResponseModel(
+            id=req.id,
+            provider="anthropic",
+            model=model,
+            type=req.type,
+            content=cached,
+            timestamp=_now_ms(),
+        )
+    
     if not is_key_valid(ANTHROPIC_API_KEY):
         print(f"Warning: ANTHROPIC_API_KEY missing or invalid. Returning mock response for {req.id}")
         await asyncio.sleep(0.5)
@@ -336,6 +520,10 @@ async def _call_anthropic(req: AIRequestModel) -> AIResponseModel:
             raise HTTPException(resp.status_code, resp.text)
         data = resp.json()
         content = (data.get("content") or [{}])[0].get("text")
+        
+        # Cache the response
+        cache_response(req.prompt, "anthropic", model, content, ttl_hours=24)
+        
         return AIResponseModel(id=req.id, provider="anthropic", model=model, type=req.type, content=content, timestamp=_now_ms())
 
     return await _with_limits("anthropic", _do())
@@ -343,6 +531,20 @@ async def _call_anthropic(req: AIRequestModel) -> AIResponseModel:
 
 async def _call_google(req: AIRequestModel) -> AIResponseModel:
     model = req.model or "gemini-1.5-flash"
+    
+    # Check cache first
+    cached = get_cached_response(req.prompt, "google", model)
+    if cached:
+        print(f"Cache hit for Google request {req.id}")
+        return AIResponseModel(
+            id=req.id,
+            provider="google",
+            model=model,
+            type=req.type,
+            content=cached,
+            timestamp=_now_ms(),
+        )
+    
     if not is_key_valid(GOOGLE_API_KEY):
         print(f"Warning: GOOGLE_API_KEY missing or invalid. Returning mock response for {req.id}")
         await asyncio.sleep(0.5)
@@ -371,6 +573,10 @@ async def _call_google(req: AIRequestModel) -> AIResponseModel:
             raise HTTPException(resp.status_code, resp.text)
         data = resp.json()
         content = data["candidates"][0]["content"]["parts"][0]["text"]
+        
+        # Cache the response
+        cache_response(req.prompt, "google", model, content, ttl_hours=24)
+        
         return AIResponseModel(id=req.id, provider="google", model=model, type=req.type, content=content, timestamp=_now_ms())
 
     return await _with_limits("google", _do())
@@ -711,3 +917,312 @@ def get_task(task_id: str):
     if not task:
         raise HTTPException(404, "Task not found")
     return task.model_dump()
+
+
+# ---------------- FILE UPLOAD FOR PIPELINES ----------------
+from fastapi import UploadFile, File as FastAPIFile
+
+@app.post("/api/files/upload")
+async def upload_file(file: UploadFile = FastAPIFile(...)):
+    """Upload file for pipeline processing"""
+    import shutil
+    
+    # Create uploads directory if it doesn't exist
+    uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+    os.makedirs(uploads_dir, exist_ok=True)
+    
+    # Generate unique file ID
+    file_uuid = str(uuid.uuid4())
+    file_ext = os.path.splitext(file.filename)[1]
+    file_path = os.path.join(uploads_dir, f"{file_uuid}{file_ext}")
+    
+    # Save file
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    file_size = os.path.getsize(file_path)
+    
+    # Store in database
+    with Session(engine) as s:
+        uploaded_file = UploadedFile(
+            file_uuid=file_uuid,
+            filename=file.filename,
+            file_path=file_path,
+            file_size=file_size,
+            file_type=file.content_type or "application/octet-stream"
+        )
+        s.add(uploaded_file)
+        s.commit()
+        s.refresh(uploaded_file)
+        audit("file.upload", {"file_uuid": file_uuid, "filename": file.filename})
+        
+        return {
+            "fileId": file_uuid,
+            "filename": file.filename,
+            "size": file_size,
+            "type": file.content_type
+        }
+
+
+@app.get("/api/files/{file_id}")
+def get_file_info(file_id: str):
+    """Get uploaded file information"""
+    with Session(engine) as s:
+        file = s.exec(select(UploadedFile).where(UploadedFile.file_uuid == file_id)).first()
+        if not file:
+            raise HTTPException(404, "File not found")
+        return file
+
+
+# ---------------- COGNITIVE MEMORY ENDPOINTS ----------------
+class MemoryStoreRequest(BaseModel):
+    key: str
+    value: str
+    memory_type: str = "general"
+    context: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+    ttl_days: Optional[int] = None
+
+
+@app.post("/api/memory/store")
+def api_store_memory(req: MemoryStoreRequest):
+    """Store cognitive memory"""
+    memory = store_memory(
+        key=req.key,
+        value=req.value,
+        memory_type=req.memory_type,
+        context=req.context,
+        metadata=req.metadata,
+        ttl_days=req.ttl_days
+    )
+    audit("memory.store", {"key": req.key, "type": req.memory_type})
+    return {"id": memory.id, "key": memory.memory_key, "status": "stored"}
+
+
+@app.get("/api/memory/{key}")
+def api_retrieve_memory(key: str, memory_type: Optional[str] = None):
+    """Retrieve cognitive memory"""
+    value = retrieve_memory(key, memory_type)
+    if not value:
+        raise HTTPException(404, "Memory not found or expired")
+    return {"key": key, "value": value}
+
+
+@app.get("/api/memory/list")
+def list_memories(memory_type: Optional[str] = None, limit: int = 100):
+    """List stored memories"""
+    with Session(engine) as s:
+        query = select(CognitiveMemory)
+        if memory_type:
+            query = query.where(CognitiveMemory.memory_type == memory_type)
+        query = query.order_by(CognitiveMemory.created_at.desc()).limit(limit)
+        memories = s.exec(query).all()
+        return [
+            {
+                "id": m.id,
+                "key": m.memory_key,
+                "type": m.memory_type,
+                "access_count": m.access_count,
+                "created_at": m.created_at.isoformat(),
+                "last_accessed": m.last_accessed.isoformat()
+            }
+            for m in memories
+        ]
+
+
+# ---------------- EXPORT ENDPOINTS ----------------
+from fastapi.responses import StreamingResponse, FileResponse
+import io
+
+class ExportRequest(BaseModel):
+    task_id: str
+    format: Literal["excel", "word", "project", "audio", "jpeg"]
+
+
+@app.post("/api/export")
+async def export_data(req: ExportRequest):
+    """Export task results to various formats"""
+    task = TASKS.get(req.task_id)
+    if not task:
+        raise HTTPException(404, "Task not found")
+    
+    if task.status != "completed":
+        raise HTTPException(400, "Task not completed yet")
+    
+    export_format = req.format
+    
+    # Excel Export
+    if export_format == "excel":
+        try:
+            from openpyxl import Workbook
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "AI Results"
+            
+            # Add headers
+            ws['A1'] = "Task ID"
+            ws['A2'] = task.id
+            ws['B1'] = "Type"
+            ws['B2'] = task.type
+            ws['C1'] = "Status"
+            ws['C2'] = task.status
+            
+            # Add response data
+            if task.response:
+                ws['A4'] = "Results"
+                ws['A5'] = json.dumps(task.response, indent=2)
+            
+            # Save to bytes
+            output = io.BytesIO()
+            wb.save(output)
+            output.seek(0)
+            
+            return StreamingResponse(
+                output,
+                media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                headers={"Content-Disposition": f"attachment; filename=task_{task.id}.xlsx"}
+            )
+        except Exception as e:
+            raise HTTPException(500, f"Excel export failed: {str(e)}")
+    
+    # Word Export
+    elif export_format == "word":
+        try:
+            from docx import Document
+            doc = Document()
+            doc.add_heading(f"Task Results: {task.id}", 0)
+            doc.add_paragraph(f"Type: {task.type}")
+            doc.add_paragraph(f"Status: {task.status}")
+            doc.add_paragraph("")
+            doc.add_heading("Results", level=1)
+            doc.add_paragraph(json.dumps(task.response, indent=2))
+            
+            output = io.BytesIO()
+            doc.save(output)
+            output.seek(0)
+            
+            return StreamingResponse(
+                output,
+                media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                headers={"Content-Disposition": f"attachment; filename=task_{task.id}.docx"}
+            )
+        except Exception as e:
+            raise HTTPException(500, f"Word export failed: {str(e)}")
+    
+    # Project Export (JSON format for project management tools)
+    elif export_format == "project":
+        project_data = {
+            "project_id": task.id,
+            "task_type": task.type,
+            "status": task.status,
+            "created_at": task.request.get("timestamp", _now_ms()),
+            "completed": task.endTime,
+            "duration_ms": (task.endTime - task.startTime) if task.endTime and task.startTime else 0,
+            "results": task.response
+        }
+        
+        output = io.BytesIO(json.dumps(project_data, indent=2).encode())
+        return StreamingResponse(
+            output,
+            media_type="application/json",
+            headers={"Content-Disposition": f"attachment; filename=project_{task.id}.json"}
+        )
+    
+    # Audio Export (Text-to-Speech)
+    elif export_format == "audio":
+        try:
+            # Extract text content from task response
+            text_content = ""
+            if task.response:
+                if isinstance(task.response, dict):
+                    text_content = task.response.get("content", str(task.response))
+                else:
+                    text_content = str(task.response)
+            
+            # Use Google TTS if available
+            if is_key_valid(GOOGLE_API_KEY):
+                endpoint = "https://texttospeech.googleapis.com/v1/text:synthesize"
+                body = {
+                    "input": {"text": text_content[:5000]},  # Limit to 5000 chars
+                    "voice": {"languageCode": "en-US", "name": "en-US-Neural2-C"},
+                    "audioConfig": {"audioEncoding": "MP3"}
+                }
+                
+                async with httpx.AsyncClient(timeout=60) as client:
+                    resp = await client.post(
+                        f"{endpoint}?key={GOOGLE_API_KEY}",
+                        headers={"Content-Type": "application/json"},
+                        json=body
+                    )
+                    
+                if resp.status_code == 200:
+                    import base64
+                    audio_b64 = resp.json().get("audioContent")
+                    audio_bytes = base64.b64decode(audio_b64)
+                    
+                    return StreamingResponse(
+                        io.BytesIO(audio_bytes),
+                        media_type="audio/mpeg",
+                        headers={"Content-Disposition": f"attachment; filename=task_{task.id}.mp3"}
+                    )
+            
+            # Fallback: return empty audio or error
+            raise HTTPException(501, "Audio export requires Google API key")
+        except Exception as e:
+            raise HTTPException(500, f"Audio export failed: {str(e)}")
+    
+    # JPEG Export (for image results or visualization)
+    elif export_format == "jpeg":
+        try:
+            from PIL import Image, ImageDraw, ImageFont
+            
+            # Create image with task info
+            img = Image.new('RGB', (800, 600), color=(255, 255, 255))
+            draw = ImageDraw.Draw(img)
+            
+            # Draw text
+            text = f"Task: {task.id}\nType: {task.type}\nStatus: {task.status}"
+            draw.text((20, 20), text, fill=(0, 0, 0))
+            
+            # If response contains image data, use that
+            if task.response and isinstance(task.response, dict):
+                if "content" in task.response and task.response.get("content", "").startswith("data:image"):
+                    # Handle base64 image
+                    import base64
+                    img_data = task.response["content"].split(",")[1]
+                    img_bytes = base64.b64decode(img_data)
+                    img = Image.open(io.BytesIO(img_bytes))
+            
+            # Save to bytes
+            output = io.BytesIO()
+            img.save(output, format="JPEG", quality=95)
+            output.seek(0)
+            
+            return StreamingResponse(
+                output,
+                media_type="image/jpeg",
+                headers={"Content-Disposition": f"attachment; filename=task_{task.id}.jpg"}
+            )
+        except Exception as e:
+            raise HTTPException(500, f"JPEG export failed: {str(e)}")
+    
+    raise HTTPException(400, f"Unsupported export format: {export_format}")
+
+
+# ---------------- WORKFLOW TRACKING ----------------
+@app.get("/api/workflows")
+def list_workflows():
+    """List workflow executions"""
+    with Session(engine) as s:
+        workflows = s.exec(select(WorkflowExecution).order_by(WorkflowExecution.started_at.desc()).limit(100)).all()
+        return workflows
+
+
+@app.get("/api/workflows/{workflow_id}")
+def get_workflow(workflow_id: str):
+    """Get workflow execution details"""
+    with Session(engine) as s:
+        workflow = s.exec(select(WorkflowExecution).where(WorkflowExecution.workflow_id == workflow_id)).first()
+        if not workflow:
+            raise HTTPException(404, "Workflow not found")
+        return workflow
