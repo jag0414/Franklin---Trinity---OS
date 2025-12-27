@@ -27,6 +27,11 @@ type SpeechRecognitionErrorEvent = Event & {
   message?: string;
 };
 
+interface WindowWithSpeech extends Window {
+  SpeechRecognition?: new () => SpeechRecognition;
+  webkitSpeechRecognition?: new () => SpeechRecognition;
+}
+
 class VoiceService {
   private recognition: SpeechRecognition | null = null;
   private synthesis: SpeechSynthesis;
@@ -55,8 +60,8 @@ class VoiceService {
 
   private initRecognition(): void {
     const SpeechRecognitionAPI = 
-      (window as any).SpeechRecognition || 
-      (window as any).webkitSpeechRecognition;
+      (window as WindowWithSpeech).SpeechRecognition || 
+      (window as WindowWithSpeech).webkitSpeechRecognition;
 
     if (!SpeechRecognitionAPI) {
       console.warn('Speech Recognition not supported in this browser');
@@ -127,8 +132,8 @@ class VoiceService {
   // Check if speech recognition is supported
   isRecognitionSupported(): boolean {
     return !!(
-      (window as any).SpeechRecognition || 
-      (window as any).webkitSpeechRecognition
+      (window as WindowWithSpeech).SpeechRecognition || 
+      (window as WindowWithSpeech).webkitSpeechRecognition
     );
   }
 

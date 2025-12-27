@@ -6,7 +6,11 @@ export interface AIResponse {
     provider: string;
     content: string;
     model: string;
-    usage?: any;
+    usage?: {
+      promptTokens?: number;
+      completionTokens?: number;
+      totalTokens?: number;
+    };
   };
   error?: string;
 }
@@ -18,13 +22,18 @@ export interface AgentTask {
   provider?: string;
 }
 
+export interface AIMessage {
+  role: string;
+  content: string;
+}
+
 export class RealAIService {
   // Call the AI orchestrator with any provider
   async callAI(
     provider: 'openai' | 'anthropic' | 'google',
     prompt: string,
     model?: string,
-    messages?: any[]
+    messages?: AIMessage[]
   ): Promise<AIResponse> {
     try {
       const { data, error } = await supabase.functions.invoke('ai-orchestrator', {
@@ -43,13 +52,13 @@ export class RealAIService {
       console.error('AI call failed:', error);
       return {
         success: false,
-        error: error.message || 'AI service unavailable'
+        error: error instanceof Error ? error.message : 'AI service unavailable'
       };
     }
   }
 
   // Execute an agent task
-  async executeAgent(task: AgentTask): Promise<any> {
+  async executeAgent(task: AgentTask): Promise<unknown> {
     try {
       const { data, error } = await supabase.functions.invoke('agent-executor', {
         body: task
@@ -65,13 +74,13 @@ export class RealAIService {
       console.error('Agent execution failed:', error);
       return {
         success: false,
-        error: error.message || 'Agent execution failed'
+        error: error instanceof Error ? error.message : 'Agent execution failed'
       };
     }
   }
 
   // Store task in database
-  async storeTask(task: AgentTask, result: any) {
+  async storeTask(task: AgentTask, result: unknown) {
     try {
       const { error } = await supabase
         .from('agent_tasks')
@@ -108,7 +117,7 @@ export class RealAIService {
   }
 
   // Multi-agent collaboration
-  async collaborateAgents(tasks: AgentTask[]): Promise<any[]> {
+  async collaborateAgents(tasks: AgentTask[]): Promise<unknown[]> {
     const results = await Promise.all(
       tasks.map(task => this.executeAgent(task))
     );
