@@ -10,8 +10,8 @@ export interface AITask {
   type: 'simple' | 'pipeline' | 'multi-agent' | 'autonomous';
   status: 'pending' | 'processing' | 'completed' | 'failed';
   priority: number;
-  request: any;
-  response?: any;
+  request: AIRequest;
+  response?: AIResponse;
   error?: string;
   startTime?: number;
   endTime?: number;
@@ -32,11 +32,13 @@ export interface AIAgent {
   };
 }
 
+type EventCallback = (data: unknown) => void;
+
 class MasterAIOrchestrator {
   private tasks: Map<string, AITask> = new Map();
   private agents: Map<string, AIAgent> = new Map();
   private taskQueue: AITask[] = [];
-  private eventListeners: Map<string, Set<Function>> = new Map();
+  private eventListeners: Map<string, Set<EventCallback>> = new Map();
   private isProcessing = false;
   private processInterval?: NodeJS.Timeout;
 
@@ -113,7 +115,7 @@ class MasterAIOrchestrator {
     this.emit('task:started', task);
 
     try {
-      let response: any;
+      let response: AIResponse;
 
       switch (task.type) {
         case 'simple':
@@ -137,8 +139,8 @@ class MasterAIOrchestrator {
       this.updateAgentPerformance(task);
       this.emit('task:completed', task);
       
-    } catch (error: any) {
-      task.error = error.message;
+    } catch (error: unknown) {
+      task.error = error instanceof Error ? error.message : 'Unknown error';
       task.status = 'failed';
       task.endTime = Date.now();
       
@@ -155,7 +157,7 @@ class MasterAIOrchestrator {
     this.tasks.set(task.id, task);
   }
 
-  private async processSimpleTask(task: AITask): Promise<any> {
+  private async processSimpleTask(task: AITask): Promise<AIResponse> {
     const agent = this.selectBestAgent(task.request);
     this.updateAgentStatus(agent.id, 'busy', task.id);
     
@@ -167,13 +169,13 @@ class MasterAIOrchestrator {
     }
   }
 
-  private async processPipelineTask(task: AITask): Promise<any> {
-    const { pipelineId, input, context } = task.request;
+  private async processPipelineTask(task: AITask): Promise<unknown> {
+    const { pipelineId, input, context } = task.request as { pipelineId: string; input: unknown; context?: { role: string; content: string }[] };
     return await aiPipeline.executePipeline(pipelineId, input, context);
   }
 
-  private async processMultiAgentTask(task: AITask): Promise<any> {
-    const { prompt, agents } = task.request;
+  private async processMultiAgentTask(task: AITask): Promise<unknown> {
+    const { prompt, agents } = task.request as { prompt: string; agents?: string[] };
     const selectedAgents = agents || ['openai', 'anthropic', 'google'];
     
     // Mark agents as busy
@@ -194,10 +196,10 @@ class MasterAIOrchestrator {
     }
   }
 
-  private async processAutonomousTask(task: AITask): Promise<any> {
+  private async processAutonomousTask(task: AITask): Promise<AIResponse> {
     // Autonomous task processing with self-directed goal completion
-    const { goal, constraints, maxSteps = 10 } = task.request;
-    const steps: any[] = [];
+    const { goal, constraints, maxSteps = 10 } = task.request as { goal: string; constraints?: string[]; maxSteps?: number };
+    const steps: AIResponse[] = [];
     let currentContext = goal;
     
     for (let i = 0; i < maxSteps; i++) {
@@ -295,7 +297,7 @@ class MasterAIOrchestrator {
     }
   }
 
-  private async aggregateResponses(responses: any[]): Promise<any> {
+  private async aggregateResponses(responses: PromiseSettledResult<AIResponse>[]): Promise<AIResponse> {
     // Intelligently aggregate responses from multiple agents
     const validResponses = responses.filter(r => r.status === 'fulfilled');
     
@@ -315,7 +317,7 @@ class MasterAIOrchestrator {
   }
 
   // Public API
-  async submitTask(request: any, type: AITask['type'] = 'simple', priority: number = 5): Promise<string> {
+  async submitTask(request: AIRequest, type: AITask['type'] = 'simple', priority: number = 5): Promise<string> {
     const task: AITask = {
       id: crypto.randomUUID(),
       type,
@@ -349,18 +351,18 @@ class MasterAIOrchestrator {
   }
 
   // Event system
-  on(event: string, callback: Function) {
+  on(event: string, callback: EventCallback) {
     if (!this.eventListeners.has(event)) {
       this.eventListeners.set(event, new Set());
     }
     this.eventListeners.get(event)!.add(callback);
   }
 
-  off(event: string, callback: Function) {
+  off(event: string, callback: EventCallback) {
     this.eventListeners.get(event)?.delete(callback);
   }
 
-  private emit(event: string, data: any) {
+  private emit(event: string, data: unknown) {
     this.eventListeners.get(event)?.forEach(callback => callback(data));
   }
 

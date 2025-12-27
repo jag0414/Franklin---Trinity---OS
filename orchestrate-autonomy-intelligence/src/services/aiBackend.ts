@@ -3,14 +3,19 @@
 
 import { aiConfig } from './aiConfig';
 
+export interface AIContextItem {
+  role: string;
+  content: string;
+}
+
 export interface AIRequest {
   id: string;
   type: 'text' | 'image' | 'audio' | 'code' | 'analysis' | 'vision';
   prompt: string;
   provider?: string;
   model?: string;
-  parameters?: Record<string, any>;
-  context?: any[];
+  parameters?: Record<string, unknown>;
+  context?: AIContextItem[];
   stream?: boolean;
 }
 
@@ -19,19 +24,25 @@ export interface AIResponse {
   provider: string;
   model: string;
   type: string;
-  content: any;
+  content: string | object;
   usage?: {
     promptTokens?: number;
     completionTokens?: number;
     totalTokens?: number;
     cost?: number;
   };
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   timestamp: number;
 }
 
+interface ProviderConfig {
+  endpoint: string;
+  headers?: Record<string, string>;
+  apiKey?: string;
+}
+
 class AIBackendOrchestrator {
-  private providers: Map<string, any> = new Map();
+  private providers: Map<string, ProviderConfig> = new Map();
   private taskQueue: AIRequest[] = [];
   private activeRequests: Map<string, AbortController> = new Map();
   private responseCache: Map<string, AIResponse> = new Map();
@@ -293,7 +304,7 @@ class AIBackendOrchestrator {
     };
   }
 
-  async orchestrateMultiAgent(task: string, agents: string[]): Promise<any> {
+  async orchestrateMultiAgent(task: string, agents: string[]): Promise<AIResponse[]> {
     // Execute task across multiple AI agents in parallel
     const requests = agents.map(agent => ({
       id: crypto.randomUUID(),

@@ -184,8 +184,6 @@ export function AICommandCenter() {
 
   // Handle voice commands
   const handleVoiceCommand = useCallback((command: VoiceCommand) => {
-    console.log('Voice command received:', command);
-    
     switch (command.action) {
       case 'execute':
         if (command.parameters?.prompt) {
