@@ -4,54 +4,65 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Activity, Wifi, WifiOff, Terminal, Zap, AlertCircle, CheckCircle } from 'lucide-react';
-import { aiOrchestrator } from '@/services/aiOrchestrator';
+import { aiOrchestrator, AITask, AIAgent } from '@/services/aiOrchestrator';
 
 interface Message {
   id: string;
   type: 'task' | 'agent' | 'system' | 'error' | 'success';
   content: string;
   timestamp: Date;
-  metadata?: any;
+  metadata?: AITask | AIAgent | { message?: string };
+}
+
+interface Stats {
+  totalTasks?: number;
+  completedTasks?: number;
+  failedTasks?: number;
+  activeAgents?: number;
 }
 
 export function WebSocketManager() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(false); // Disabled by default
 
   useEffect(() => {
     // Connect to AI Orchestrator events
-    const handleTaskCreated = (task: any) => {
+    const handleTaskCreated = (task: unknown) => {
+      const t = task as AITask;
       addMessage({
         type: 'task',
-        content: `New task created: ${task.type} - ${task.id.slice(0, 8)}`,
-        metadata: task
+        content: `New task created: ${t.type} - ${t.id.slice(0, 8)}`,
+        metadata: t
       });
     };
 
-    const handleTaskCompleted = (task: any) => {
+    const handleTaskCompleted = (task: unknown) => {
+      const t = task as AITask;
       addMessage({
         type: 'success',
-        content: `Task completed: ${task.id.slice(0, 8)} in ${task.endTime - task.startTime}ms`,
-        metadata: task
+        content: `Task completed: ${t.id.slice(0, 8)} in ${(t.endTime || 0) - (t.startTime || 0)}ms`,
+        metadata: t
       });
     };
 
-    const handleTaskFailed = (task: any) => {
+    const handleTaskFailed = (task: unknown) => {
+      const t = task as AITask;
       addMessage({
         type: 'error',
-        content: `Task failed: ${task.id.slice(0, 8)} - ${task.error}`,
-        metadata: task
+        content: `Task failed: ${t.id.slice(0, 8)} - ${t.error}`,
+        metadata: t
       });
     };
 
-    const handleAgentStatus = (agent: any) => {
+    const handleAgentStatus = (agent: unknown) => {
+      const a = agent as AIAgent;
       addMessage({
         type: 'agent',
-        content: `Agent ${agent.name} is now ${agent.status}`,
-        metadata: agent
+        content: `Agent ${a.name} is now ${a.status}`,
+        metadata: a
       });
     };
 
@@ -92,7 +103,7 @@ export function WebSocketManager() {
         type: 'text',
         prompt: randomPrompt,
         provider: 'openai'
-      }, randomType as any, Math.floor(Math.random() * 10));
+      }, randomType as 'simple' | 'pipeline' | 'multi-agent', Math.floor(Math.random() * 10));
     }, 30000); // Changed from 5000ms to 30000ms
 
     return () => {
