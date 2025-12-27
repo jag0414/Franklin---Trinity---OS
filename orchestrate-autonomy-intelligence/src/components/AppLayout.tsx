@@ -16,6 +16,7 @@ import DeploymentWizard from './DeploymentWizard';
 import WebSocketManager from './WebSocketManager';
 import TaskFlowDiagram from './TaskFlowDiagram';
 import AICommandCenter from './AICommandCenter';
+import { CognitiveMemoryPanel } from './CognitiveMemoryPanel';
 
 const AppLayout = () => {
   const [activeSection, setActiveSection] = useState('overview');
@@ -124,13 +125,14 @@ const AppLayout = () => {
               <span className="font-bold text-xl">Franklin OS</span>
             </div>
             <div className="flex gap-8">
-              {['AI Center', 'Orchestrator', 'Sovereignty', 'Security', 'Deploy'].map((item) => (
+              {['AI Center', 'Memory', 'Orchestrator', 'Sovereignty', 'Security', 'Deploy'].map((item) => (
                 <button
                   key={item}
                   onClick={() => scrollToSection(item.toLowerCase().replace(' ', '-'))}
                   className="text-gray-400 hover:text-white transition-colors flex items-center gap-1"
                 >
                   {item === 'AI Center' && <Brain className="w-4 h-4" />}
+                  {item === 'Memory' && <Database className="w-4 h-4" />}
                   {item}
                 </button>
               ))}
@@ -141,6 +143,13 @@ const AppLayout = () => {
       {/* AI Command Center - REAL AI Integration */}
       <section id="ai-center" className="py-20 bg-gradient-to-b from-purple-950/20 to-gray-950">
         <AICommandCenter />
+      </section>
+
+      {/* Cognitive Memory System */}
+      <section id="memory" className="py-20 bg-gradient-to-b from-gray-950 to-purple-950/10">
+        <div className="max-w-7xl mx-auto px-6">
+          <CognitiveMemoryPanel />
+        </div>
       </section>
 
       {/* Agent Orchestrator Section */}
