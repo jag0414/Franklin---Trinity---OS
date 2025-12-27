@@ -123,7 +123,7 @@ class CognitiveMemory(SQLModel, table=True):
     last_accessed: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     expires_at: Optional[datetime] = None
-    metadata: Optional[str] = None  # JSON string for additional metadata
+    meta_data: Optional[str] = None  # JSON string for additional metadata (renamed from metadata)
 
 
 class AIResponseCache(SQLModel, table=True):
@@ -269,7 +269,7 @@ def store_memory(key: str, value: str, memory_type: str = "general", context: Op
             memory_value=value,
             memory_type=memory_type,
             context=context,
-            metadata=json.dumps(metadata) if metadata else None,
+            meta_data=json.dumps(metadata) if metadata else None,
             expires_at=expires_at
         )
         s.add(memory)
