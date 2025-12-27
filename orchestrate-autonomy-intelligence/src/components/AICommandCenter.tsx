@@ -10,6 +10,8 @@ import { Brain, Zap, Send, Loader2, AlertCircle, CheckCircle, Sparkles, Cpu, Net
 import { aiService } from '@/services/realAIService';
 import { VoiceAssistant } from '@/components/VoiceAssistant';
 import { VoiceCommand, voiceService } from '@/services/voiceService';
+import { FileUploadExport } from '@/components/FileUploadExport';
+import { AgentResponseWindow } from '@/components/AgentResponseWindow';
 
 export function AICommandCenter() {
   const [prompt, setPrompt] = useState('');
@@ -22,6 +24,8 @@ export function AICommandCenter() {
   const [activeTab, setActiveTab] = useState('command');
   const [lastResponse, setLastResponse] = useState<string>('');
   const [showVoiceAssistant, setShowVoiceAssistant] = useState(true);
+  const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
+  const [uploadedFileId, setUploadedFileId] = useState<string | null>(null);
 
   const agents = [
     { id: 'researcher', name: 'Research Agent', description: 'Analyzes topics and provides insights' },
@@ -53,6 +57,8 @@ export function AICommandCenter() {
     if (!promptToUse.trim() || isProcessing) return;
     
     setIsProcessing(true);
+    const taskId = crypto.randomUUID();
+    setCurrentTaskId(taskId);
     
     try {
       const response = await aiService.callAI(
@@ -63,7 +69,7 @@ export function AICommandCenter() {
       if (response.success && response.data) {
         const content = response.data.content;
         setResults(prev => [{
-          id: crypto.randomUUID(),
+          id: taskId,
           type: 'success',
           content: content,
           timestamp: new Date(),
@@ -83,7 +89,7 @@ export function AICommandCenter() {
     } catch (error: any) {
       const errorMessage = error.message || 'Failed to process request';
       setResults(prev => [{
-        id: crypto.randomUUID(),
+        id: taskId,
         type: 'error',
         content: errorMessage,
         timestamp: new Date(),
@@ -256,6 +262,12 @@ export function AICommandCenter() {
   const handleTranscript = useCallback((text: string) => {
     setPrompt(text);
   }, []);
+
+  // Handle file upload callback
+  const handleFileUploaded = (fileId: string, filename: string) => {
+    setUploadedFileId(fileId);
+    console.log('File uploaded:', fileId, filename);
+  };
 
   return (
     <div className="space-y-6">
@@ -527,6 +539,19 @@ export function AICommandCenter() {
           </div>
         )}
       </Card>
+
+      {/* Agent Response Window */}
+      <AgentResponseWindow 
+        responses={results}
+        isProcessing={isProcessing}
+        currentTask={prompt}
+      />
+
+      {/* File Upload and Export Component */}
+      <FileUploadExport 
+        onFileUploaded={handleFileUploaded}
+        taskId={currentTaskId || undefined}
+      />
     </div>
   );
 }
