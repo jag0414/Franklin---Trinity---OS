@@ -25,8 +25,23 @@ APP_NAME = "Franklin OS • BidNova • Trinity"
 SECRET = os.getenv("FRANKLIN_JWT_SECRET", "CHANGE_ME_NOW")
 JWT_ALGO = "HS256"
 DB_URL = os.getenv("FRANKLIN_DB_URL", "sqlite:///franklin.db")
-if DB_URL and DB_URL.startswith("postgres://"):
+
+# EMERGENCY FIX FOR RAILWAY/POSTGRES COMPATIBILITY
+if DB_URL.startswith("postgres://"):
     DB_URL = DB_URL.replace("postgres://", "postgresql://", 1)
+
+print(f"🚀 Franklin Engine: Connecting to {DB_URL.split('@')[-1]}...") # Safe logging
+
+try:
+    engine = create_engine(DB_URL, pool_pre_ping=True)
+    with Session(engine) as session:
+        # Force a simple query to verify connection
+        session.execute("SELECT 1")
+    print("✅ Database Connection: SECURE")
+except Exception as e:
+    print(f"❌ Database Connection FAILED: {e}")
+    # Fallback to local if production db fails (Sovereign Safety)
+    engine = create_engine("sqlite:///franklin.db")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
@@ -58,7 +73,6 @@ CORS_ORIGINS = [
     "http://127.0.0.1:8082",
 ]
 
-engine = create_engine(DB_URL, connect_args={"check_same_thread": False} if "sqlite" in DB_URL else {})
 app = FastAPI(title=APP_NAME)
 
 app.add_middleware(
