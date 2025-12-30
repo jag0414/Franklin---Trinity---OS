@@ -13,11 +13,15 @@ from typing import Any, Deque, Dict, List, Literal, Optional
 
 import httpx
 import jwt
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field as PydanticField
 from sqlmodel import Field, Session, SQLModel, create_engine, select
+
+# Load environment variables from .env file
+load_dotenv()
 
 # ---------------- CONFIG ----------------
 APP_NAME = "Franklin OS • BidNova • Trinity"

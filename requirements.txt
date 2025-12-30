@@ -21,6 +21,7 @@ websockets
 psutil
 PyJWT
 cryptography
+python-dotenv
 
 # Authentication & Security
 python-jose[cryptography]
