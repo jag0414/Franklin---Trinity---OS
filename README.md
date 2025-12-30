@@ -52,6 +52,7 @@ A FastAPI-powered AI orchestration platform with support for OpenAI, Anthropic, 
 
 ## 📖 Documentation
 
+- **[ANTHROPIC_SETUP.md](ANTHROPIC_SETUP.md)** - Anthropic Claude API configuration guide
 - **[PRODUCTION_READY.md](PRODUCTION_READY.md)** - Complete deployment checklist
 - **[FINAL_DEPLOYMENT_GUIDE.md](FINAL_DEPLOYMENT_GUIDE.md)** - Step-by-step guide with troubleshooting
 - **[RAILWAY_VARIABLES.env](RAILWAY_VARIABLES.env)** - Environment variables template

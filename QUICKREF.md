@@ -220,6 +220,11 @@ python -m pytest -q
 ## Environment Variables
 
 ```pwsh
+# Option 1: Use .env file (recommended for local development)
+# Create a .env file in project root with your keys
+# See ANTHROPIC_SETUP.md for details
+
+# Option 2: Set environment variables directly
 # AI Engine Keys (optional - engines without keys are skipped)
 $env:GEMINI_API_KEY = "your-key"
 $env:OPENAI_API_KEY = "your-key"
