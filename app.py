@@ -8,6 +8,7 @@ import json
 import os
 import uuid
 from collections import deque
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from typing import Any, Deque, Dict, List, Literal, Optional
 
@@ -36,7 +37,8 @@ try:
     engine = create_engine(DB_URL, pool_pre_ping=True)
     with Session(engine) as session:
         # Force a simple query to verify connection
-        session.execute("SELECT 1")
+        from sqlalchemy import text
+        session.execute(text("SELECT 1"))
     print("✅ Database Connection: SECURE")
 except Exception as e:
     print(f"❌ Database Connection FAILED: {e}")
@@ -73,7 +75,20 @@ CORS_ORIGINS = [
     "http://127.0.0.1:8082",
 ]
 
-app = FastAPI(title=APP_NAME)
+# Create lifespan context manager for startup/shutdown
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Start the worker task
+    worker_task = asyncio.create_task(_worker())
+    yield
+    # Shutdown: Cancel the worker task
+    worker_task.cancel()
+    try:
+        await worker_task
+    except asyncio.CancelledError:
+        pass
+
+app = FastAPI(title=APP_NAME, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -773,11 +788,6 @@ async def _worker():
         finally:
             task.endTime = _now_ms()
             TASKS[task_id] = task
-
-
-@app.on_event("startup")
-async def _startup():
-    asyncio.create_task(_worker())
 
 
 if __name__ == "__main__":
