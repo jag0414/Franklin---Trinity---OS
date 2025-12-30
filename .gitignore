@@ -3,10 +3,12 @@ node_modules/
 package-lock.json
 yarn.lock
 
-# Environment variables
+# Environment variables (NEVER COMMIT THESE!)
 .env
 .env.local
 .env.*.local
+.env.production
+.env.development
 
 # Logs
 logs
@@ -58,3 +60,21 @@ ENV/
 .vs/
 *.user
 *.suo
+
+# Database files (local development only)
+*.db
+*.sqlite
+*.sqlite3
+franklin.db
+
+# Secrets and keys (additional protection)
+secrets/
+*.pem
+*.key
+*.cert
+id_rsa*
+
+# Backup files
+*.bak
+*.backup
+*~

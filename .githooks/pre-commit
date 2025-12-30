@@ -1,0 +1,72 @@
+#!/bin/bash
+# Pre-commit hook to prevent committing API keys
+# 
+# To install this hook:
+#   chmod +x .githooks/pre-commit
+#   git config core.hooksPath .githooks
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo "🔍 Scanning for API keys and secrets..."
+
+# Patterns to detect API keys
+PATTERNS=(
+    "sk-proj-[A-Za-z0-9]{40,}"  # OpenAI project keys
+    "sk-[A-Za-z0-9]{40,}"        # OpenAI/Stability keys
+    "sk-ant-[A-Za-z0-9]{40,}"    # Anthropic keys
+    "AIza[A-Za-z0-9_-]{35}"      # Google API keys
+)
+
+# Files to check (staged files)
+FILES=$(git diff --cached --name-only --diff-filter=ACM)
+
+# Flag to track if secrets found
+SECRETS_FOUND=0
+
+for file in $FILES; do
+    # Skip binary files
+    if file "$file" | grep -q "text"; then
+        for pattern in "${PATTERNS[@]}"; do
+            if grep -qE "$pattern" "$file"; then
+                echo -e "${RED}❌ BLOCKED: Potential API key detected in $file${NC}"
+                echo -e "${YELLOW}   Pattern: $pattern${NC}"
+                grep -nE "$pattern" "$file" | head -3
+                SECRETS_FOUND=1
+            fi
+        done
+    fi
+done
+
+# Check for .env files (should never be committed)
+if echo "$FILES" | grep -qE "^\.env$|^\.env\.local$|^\.env\.production$"; then
+    echo -e "${RED}❌ BLOCKED: .env file detected${NC}"
+    echo -e "${YELLOW}   Files like .env should never be committed.${NC}"
+    echo -e "${YELLOW}   Only commit .env.example${NC}"
+    SECRETS_FOUND=1
+fi
+
+if [ $SECRETS_FOUND -eq 1 ]; then
+    echo ""
+    echo -e "${RED}╔════════════════════════════════════════════════════╗${NC}"
+    echo -e "${RED}║  COMMIT BLOCKED - API KEYS OR SECRETS DETECTED!   ║${NC}"
+    echo -e "${RED}╚════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${YELLOW}What to do:${NC}"
+    echo "  1. Remove the API keys from your code"
+    echo "  2. Use environment variables instead: os.getenv('API_KEY')"
+    echo "  3. Add keys to .env file (which is gitignored)"
+    echo "  4. See SECURITY.md for detailed instructions"
+    echo ""
+    echo -e "${YELLOW}If you believe this is a false positive:${NC}"
+    echo "  git commit --no-verify (use with extreme caution!)"
+    echo ""
+    exit 1
+fi
+
+echo "✅ No API keys detected. Safe to commit."
+exit 0

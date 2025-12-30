@@ -52,6 +52,7 @@ A FastAPI-powered AI orchestration platform with support for OpenAI, Anthropic, 
 
 ## 📖 Documentation
 
+- **[SECURITY.md](SECURITY.md)** - 🔒 **API Key Security & Best Practices** ⚠️
 - **[PRODUCTION_READY.md](PRODUCTION_READY.md)** - Complete deployment checklist
 - **[FINAL_DEPLOYMENT_GUIDE.md](FINAL_DEPLOYMENT_GUIDE.md)** - Step-by-step guide with troubleshooting
 - **[RAILWAY_VARIABLES.env](RAILWAY_VARIABLES.env)** - Environment variables template
@@ -119,18 +120,29 @@ Franklin Trinity OS
 
 ## 🔐 Environment Variables
 
+⚠️ **SECURITY WARNING**: Never commit API keys! See [SECURITY.md](SECURITY.md) for detailed security guidelines.
+
 See [RAILWAY_VARIABLES.env](RAILWAY_VARIABLES.env) for complete list.
 
 **Required:**
 - `PORT=8080`
 - `FRANKLIN_DB_URL` - PostgreSQL connection string
-- `FRANKLIN_JWT_SECRET` - Secret key for JWT tokens
+- `FRANKLIN_JWT_SECRET` - Secret key for JWT tokens (change default!)
 
 **Optional (for real AI):**
-- `OPENAI_API_KEY`
-- `ANTHROPIC_API_KEY`
-- `GOOGLE_API_KEY`
-- `STABILITY_API_KEY`
+- `OPENAI_API_KEY` - Get from https://platform.openai.com/api-keys
+- `ANTHROPIC_API_KEY` - Get from https://console.anthropic.com/
+- `GOOGLE_API_KEY` - Get from https://makersuite.google.com/app/apikey
+- `STABILITY_API_KEY` - Get from https://platform.stability.ai/
+
+**Setup for Local Development:**
+```bash
+# 1. Copy the example file
+cp .env.example .env
+
+# 2. Edit .env with your actual API keys (NEVER commit this file!)
+# 3. Verify .env is in .gitignore
+```
 
 ## 📊 API Endpoints
 
@@ -150,6 +162,7 @@ See [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
+- **Security Issues**: See [SECURITY.md](SECURITY.md) for reporting vulnerabilities
 - Check [FINAL_DEPLOYMENT_GUIDE.md](FINAL_DEPLOYMENT_GUIDE.md) for troubleshooting
 - Review Railway deployment logs
 - Test locally with `.\smoke_test.ps1`
