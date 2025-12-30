@@ -45,7 +45,11 @@ def test_database():
         with Session(engine) as session:
             from sqlalchemy import text
             result = session.execute(text('SELECT 1')).fetchone()
-            print(f'   ✅ Database query successful')
+            if result and result[0] == 1:
+                print(f'   ✅ Database query successful')
+            else:
+                print(f'   ❌ Database query returned unexpected result: {result}')
+                return False
         
         print('\n3. Testing Database Models...')
         with Session(engine) as session:

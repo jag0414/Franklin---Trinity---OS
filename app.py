@@ -18,6 +18,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field as PydanticField
+from sqlalchemy import text
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 
 # ---------------- CONFIG ----------------
@@ -37,7 +38,6 @@ try:
     engine = create_engine(DB_URL, pool_pre_ping=True)
     with Session(engine) as session:
         # Force a simple query to verify connection
-        from sqlalchemy import text
         session.execute(text("SELECT 1"))
     print("✅ Database Connection: SECURE")
 except Exception as e:
