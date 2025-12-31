@@ -33,10 +33,11 @@ if DB_URL.startswith("postgres://"):
 print(f"🚀 Franklin Engine: Connecting to {DB_URL.split('@')[-1]}...") # Safe logging
 
 try:
+    from sqlalchemy import text
     engine = create_engine(DB_URL, pool_pre_ping=True)
     with Session(engine) as session:
         # Force a simple query to verify connection
-        session.execute("SELECT 1")
+        session.execute(text("SELECT 1"))
     print("✅ Database Connection: SECURE")
 except Exception as e:
     print(f"❌ Database Connection FAILED: {e}")
