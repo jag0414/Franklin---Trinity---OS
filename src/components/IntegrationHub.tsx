@@ -20,10 +20,17 @@ const IntegrationHub = () => {
     { name: 'Docker', category: 'infrastructure', status: 'connected' },
     { name: 'Terraform', category: 'infrastructure', status: 'available' },
     { name: 'OpenAI', category: 'ai', status: 'connected' },
-    { name: 'Anthropic', category: 'ai', status: 'pending' }
+    { name: 'Anthropic', category: 'ai', status: 'connected' },
+    { name: 'Google Gemini', category: 'ai', status: 'connected' },
+    { name: 'Stability AI', category: 'ai', status: 'connected', quality: 'high' },
+    { name: 'Llama (Local)', category: 'ai', status: 'connected' },
+    { name: 'Mistral (Local)', category: 'ai', status: 'connected' },
+    { name: 'Microsoft 365', category: 'export', status: 'connected' },
+    { name: 'Google Workspace', category: 'export', status: 'connected' },
+    { name: 'Notion', category: 'export', status: 'connected' }
   ];
 
-  const categories = ['all', 'communication', 'storage', 'development', 'payment', 'database', 'infrastructure', 'ai'];
+  const categories = ['all', 'communication', 'storage', 'development', 'payment', 'database', 'infrastructure', 'ai', 'export'];
   
   const filteredIntegrations = filter === 'all' 
     ? integrations 

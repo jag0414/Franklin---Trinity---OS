@@ -3,7 +3,8 @@ import {
   Shield, Cpu, Cloud, Server, Lock, Zap, 
   Network, Database, Code, Globe, Activity,
   ChevronRight, CheckCircle, AlertCircle, Play,
-  Layers, GitBranch, Terminal, Sparkles, Brain
+  Layers, GitBranch, Terminal, Sparkles, Brain,
+  DollarSign, Workflow
 } from 'lucide-react';
 import ParticleBackground from '@/components/ParticleBackground';
 import MultiAgentCollaboration from '@/components/MultiAgentCollaboration';
@@ -16,6 +17,9 @@ import DeploymentWizard from './DeploymentWizard';
 import WebSocketManager from './WebSocketManager';
 import TaskFlowDiagram from './TaskFlowDiagram';
 import AICommandCenter from './AICommandCenter';
+import LiquidWorkbench from './LiquidWorkbench';
+import HybridAgentCreator from './HybridAgentCreator';
+import MonetizationDashboard from './MonetizationDashboard';
 
 const AppLayout = () => {
   const [activeSection, setActiveSection] = useState('overview');
@@ -124,20 +128,54 @@ const AppLayout = () => {
               <span className="font-bold text-xl">Franklin OS</span>
             </div>
             <div className="flex gap-8">
-              {['AI Center', 'Orchestrator', 'Sovereignty', 'Security', 'Deploy'].map((item) => (
+              {[
+                { name: 'Workbench', icon: Terminal },
+                { name: 'Hybrid Agents', icon: Workflow },
+                { name: 'Academy', icon: Brain },
+                { name: 'Pricing', icon: DollarSign },
+                { name: 'Deploy', icon: Cloud }
+              ].map((item) => (
                 <button
-                  key={item}
-                  onClick={() => scrollToSection(item.toLowerCase().replace(' ', '-'))}
+                  key={item.name}
+                  onClick={() => scrollToSection(item.name.toLowerCase().replace(' ', '-'))}
                   className="text-gray-400 hover:text-white transition-colors flex items-center gap-1"
                 >
-                  {item === 'AI Center' && <Brain className="w-4 h-4" />}
-                  {item}
+                  <item.icon className="w-4 h-4" />
+                  {item.name}
                 </button>
               ))}
             </div>
           </div>
         </div>
       </nav>
+      
+      {/* Liquid Workbench - Page 2 Dashboard */}
+      <section id="workbench" className="py-20 bg-gradient-to-b from-gray-950 via-cyan-950/10 to-gray-950">
+        <LiquidWorkbench />
+      </section>
+
+      {/* Hybrid Agent Creator */}
+      <section id="hybrid-agents" className="py-20 bg-gradient-to-b from-gray-950 to-purple-950/10">
+        <HybridAgentCreator />
+      </section>
+
+      {/* AI Agent Academy Section */}
+      <section id="academy" className="py-20 bg-gradient-to-b from-gray-950 to-indigo-950/10">
+        <div className="max-w-7xl mx-auto px-6">
+          <AgentAcademy />
+        </div>
+      </section>
+
+      {/* Monetization Dashboard */}
+      <section id="pricing" className="py-20 bg-gradient-to-b from-gray-950 to-green-950/10">
+        <MonetizationDashboard />
+      </section>
+
+      {/* Integration Hub Section */}
+      <section id="integrations" className="py-20 bg-gradient-to-b from-gray-950 to-purple-950/10">
+        <IntegrationHub />
+      </section>
+
       {/* AI Command Center - REAL AI Integration */}
       <section id="ai-center" className="py-20 bg-gradient-to-b from-purple-950/20 to-gray-950">
         <AICommandCenter />
@@ -166,17 +204,6 @@ const AppLayout = () => {
       {/* Security Fortress Section */}
       <section id="security" className="py-20">
         <SecurityFortress />
-      </section>
-
-      {/* Integration Hub Section */}
-      <section id="integrations" className="py-20 bg-gradient-to-b from-gray-950 to-purple-950/10">
-        <IntegrationHub />
-      </section>
-      {/* AI Agent Academy Section */}
-      <section id="academy" className="py-20 bg-gradient-to-b from-gray-950 to-indigo-950/10">
-        <div className="max-w-7xl mx-auto px-6">
-          <AgentAcademy />
-        </div>
       </section>
 
       {/* Multi-Agent Collaboration Section */}
