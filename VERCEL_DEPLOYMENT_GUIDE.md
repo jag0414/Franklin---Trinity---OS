@@ -51,8 +51,9 @@ Excludes unnecessary files from deployment:
    If connecting to backend API:
    ```
    Name: VITE_API_BASE_URL
-   Value: https://your-backend.up.railway.app
+   Value: https://your-backend.railway.app
    ```
+   (Replace with your actual Railway URL from Railway dashboard)
 
 5. **Deploy**
    - Click "Deploy"
@@ -209,11 +210,14 @@ vercel link
 
 ### Railway Backend + Vercel Frontend
 1. Deploy backend to Railway first
-2. Get Railway backend URL (e.g., `https://your-app-name.up.railway.app`)
+2. Get Railway backend URL from Railway dashboard
+   - May be `https://your-app-name.up.railway.app` or `https://your-app-name.railway.app`
+   - Check your Railway project's Settings → Domains
 3. Add to Vercel environment variables:
    ```
    VITE_API_BASE_URL=https://your-app-name.up.railway.app
    ```
+   (Replace with your actual Railway URL)
 4. Redeploy Vercel frontend
 
 ### CORS Configuration
