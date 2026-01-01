@@ -1,0 +1,63 @@
+# Python files
+*.py
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+ENV/
+franklin.db
+
+# Backend directories
+backend/
+backend_unified/
+franklin_backend/
+routers/
+services/
+workers/
+middleware/
+orchestration/
+orchestrate-autonomy-intelligence/
+
+# Build and dependencies
+node_modules/
+package-lock.json
+
+# Documentation
+*.md
+!README.md
+
+# Configuration files (except required ones)
+.env.example
+.dockerignore
+docker-compose.yml
+Dockerfile
+Dockerfile.txt
+*.ps1
+
+# Testing
+*.test.js
+*.test.ts
+*.test.tsx
+__tests__/
+test_*.py
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Other
+uploads/
+tmp/
+temp/
+.git/
+.github/
