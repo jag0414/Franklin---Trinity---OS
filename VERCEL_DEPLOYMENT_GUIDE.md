@@ -146,9 +146,14 @@ Vercel automatically caches:
 - Build output
 
 ### Image Optimization
-Use Vercel's built-in image optimization:
+For image optimization in Vite, consider:
 ```tsx
-import Image from 'next/image' // If using Next.js features
+// Use standard img tags with proper sizing
+<img src="/image.jpg" alt="Description" width={800} height={600} />
+
+// Or use vite-imagetools for build-time optimization
+// npm install vite-imagetools
+import image from './image.jpg?w=800&format=webp'
 ```
 
 ### Analytics
@@ -204,10 +209,10 @@ vercel link
 
 ### Railway Backend + Vercel Frontend
 1. Deploy backend to Railway first
-2. Get Railway backend URL (e.g., `https://app.railway.app`)
+2. Get Railway backend URL (e.g., `https://your-app-name.up.railway.app`)
 3. Add to Vercel environment variables:
    ```
-   VITE_API_BASE_URL=https://your-app.up.railway.app
+   VITE_API_BASE_URL=https://your-app-name.up.railway.app
    ```
 4. Redeploy Vercel frontend
 

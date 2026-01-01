@@ -94,7 +94,7 @@ When ready, deploy your React frontend to Vercel:
 
 ### Local Testing
 - **Backend**: `.\Start_Backend.ps1` ? `http://localhost:8000`
-- **Frontend**: `.\Start_Frontend.ps1` ? `http://localhost:5173`
+- **Frontend**: `.\Start_Frontend.ps1` ? `http://localhost:8080` (configured in vite.config.ts)
 - **Both**: `.\Start_All.ps1`
 - **Smoke Test**: `.\smoke_test.ps1`
 
