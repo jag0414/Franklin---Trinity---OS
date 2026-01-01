@@ -211,8 +211,9 @@ vercel link
 ### Railway Backend + Vercel Frontend
 1. Deploy backend to Railway first
 2. Get Railway backend URL from Railway dashboard
-   - May be `https://your-app-name.up.railway.app` or `https://your-app-name.railway.app`
-   - Check your Railway project's Settings → Domains
+   - New deployments: `https://your-app-name.up.railway.app` (default)
+   - Legacy deployments: `https://your-app-name.railway.app`
+   - Check your Railway project's Settings → Domains for the exact URL
 3. Add to Vercel environment variables:
    ```
    VITE_API_BASE_URL=https://your-app-name.up.railway.app

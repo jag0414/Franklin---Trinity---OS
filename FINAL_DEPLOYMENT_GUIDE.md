@@ -89,12 +89,12 @@ When ready, deploy your React frontend to Vercel:
 - **Database**: PostgreSQL (connected via `FRANKLIN_DB_URL`)
 
 ### Frontend (Local Dev or Vercel)
-- **Dev**: `npm run dev` → `http://localhost:8080` (configured in vite.config.ts)
+- **Dev**: `npm run dev` → `http://localhost:8080` (configured in vite.config.ts line 9)
 - **Prod**: Deploy to Vercel (uses `vercel.json` for build configuration and SPA routing)
 
 ### Local Testing
 - **Backend**: `.\Start_Backend.ps1` ? `http://localhost:8000`
-- **Frontend**: `.\Start_Frontend.ps1` ? `http://localhost:8080` (configured in vite.config.ts)
+- **Frontend**: `.\Start_Frontend.ps1` ? `http://localhost:8080` (configured in vite.config.ts line 9)
 - **Both**: `.\Start_All.ps1`
 - **Smoke Test**: `.\smoke_test.ps1`
 
