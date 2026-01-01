@@ -62,9 +62,21 @@ Deployment Verification PASSED! 🎉
 ### Step 5: Deploy Frontend (Optional)
 When ready, deploy your React frontend to Vercel:
 1. Go to [Vercel.com](https://vercel.com/)
-2. Import: `jag0414/Franklin---Trinity---OS`
-3. Set environment variable: `VITE_API_BASE_URL=https://your-app-name.up.railway.app`
-4. Deploy!
+2. Click "Add New Project" → Import Git Repository
+3. Select: `jag0414/Franklin---Trinity---OS`
+4. Configure Build Settings:
+   - **Framework Preset**: Vite (auto-detected)
+   - **Root Directory**: `./` (leave as default)
+   - **Build Command**: `npm run build` (auto-detected from vercel.json)
+   - **Output Directory**: `dist` (auto-detected from vercel.json)
+   - **Install Command**: `npm install` (auto-detected from vercel.json)
+5. Set Environment Variables (if needed):
+   - `VITE_API_BASE_URL`: `https://your-app-name.up.railway.app`
+6. Click "Deploy"
+7. Wait for deployment to complete (2-3 minutes)
+8. Access your frontend at: `https://your-app.vercel.app`
+
+**Note**: The `vercel.json` configuration file handles SPA routing automatically.
 
 ---
 
@@ -77,12 +89,12 @@ When ready, deploy your React frontend to Vercel:
 - **Database**: PostgreSQL (connected via `FRANKLIN_DB_URL`)
 
 ### Frontend (Local Dev or Vercel)
-- **Dev**: `npm run dev` → `http://localhost:5173`
-- **Prod**: Deploy to Vercel (uses `vercel.json`)
+- **Dev**: `npm run dev` → `http://localhost:8080` (configured in vite.config.ts line 9)
+- **Prod**: Deploy to Vercel (uses `vercel.json` for build configuration and SPA routing)
 
 ### Local Testing
 - **Backend**: `.\Start_Backend.ps1` ? `http://localhost:8000`
-- **Frontend**: `.\Start_Frontend.ps1` ? `http://localhost:5173`
+- **Frontend**: `.\Start_Frontend.ps1` ? `http://localhost:8080` (configured in vite.config.ts line 9)
 - **Both**: `.\Start_All.ps1`
 - **Smoke Test**: `.\smoke_test.ps1`
 
