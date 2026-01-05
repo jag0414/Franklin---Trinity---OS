@@ -29,8 +29,7 @@ const Profile = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // TODO: Implement profile update
-    console.log('Update profile:', formData);
+    // Profile update functionality not yet implemented
     setEditing(false);
   };
 

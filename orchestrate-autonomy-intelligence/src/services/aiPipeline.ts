@@ -10,8 +10,8 @@ export interface PipelineStage {
   provider?: string;
   model?: string;
   prompt?: string;
-  transformer?: (input: any) => any;
-  validator?: (input: any) => boolean;
+  transformer?: (input: unknown) => unknown;
+  validator?: (input: unknown) => boolean;
 }
 
 export interface Pipeline {
@@ -172,9 +172,9 @@ export class AIPipelineOrchestrator {
 
   async executePipeline(
     pipelineId: string, 
-    input: any,
-    context?: any[]
-  ): Promise<any> {
+    input: unknown,
+    context?: { role: string; content: string }[]
+  ): Promise<unknown> {
     const pipeline = this.pipelines.get(pipelineId);
     if (!pipeline) {
       throw new Error(`Pipeline ${pipelineId} not found`);
@@ -196,11 +196,11 @@ export class AIPipelineOrchestrator {
 
   private async executeSequential(
     pipeline: Pipeline,
-    input: any,
-    context?: any[]
-  ): Promise<any> {
+    input: unknown,
+    context?: { role: string; content: string }[]
+  ): Promise<unknown> {
     let currentOutput = input;
-    const results: any[] = [];
+    const results: { stage: string; output: unknown; timestamp: number }[] = [];
 
     for (const stage of pipeline.stages) {
       try {
@@ -242,9 +242,9 @@ export class AIPipelineOrchestrator {
 
   private async executeParallel(
     pipeline: Pipeline,
-    input: any,
-    context?: any[]
-  ): Promise<any> {
+    input: unknown,
+    context?: { role: string; content: string }[]
+  ): Promise<unknown> {
     const promises = pipeline.stages.map(stage => 
       this.executeStage(stage, input, context)
         .then(output => ({
@@ -270,12 +270,12 @@ export class AIPipelineOrchestrator {
 
   private async executeStage(
     stage: PipelineStage,
-    input: any,
-    context?: any[]
-  ): Promise<any> {
+    input: unknown,
+    context?: { role: string; content: string }[]
+  ): Promise<unknown> {
     switch (stage.type) {
       case 'process':
-      case 'enhance':
+      case 'enhance': {
         const prompt = stage.prompt?.replace('{input}', 
           typeof input === 'string' ? input : JSON.stringify(input)
         );
@@ -291,8 +291,9 @@ export class AIPipelineOrchestrator {
         
         const response = await aiBackend.executeRequest(request);
         return response.content;
+      }
 
-      case 'transform':
+      case 'transform': {
         if (stage.transformer) {
           return stage.transformer(input);
         }
@@ -300,14 +301,15 @@ export class AIPipelineOrchestrator {
         const transformRequest: AIRequest = {
           id: crypto.randomUUID(),
           type: 'text',
-          prompt: stage.prompt?.replace('{input}', input) || input,
+          prompt: stage.prompt?.replace('{input}', typeof input === 'string' ? input : JSON.stringify(input)) || (typeof input === 'string' ? input : JSON.stringify(input)),
           provider: stage.provider,
           context
         };
         const transformResponse = await aiBackend.executeRequest(transformRequest);
         return transformResponse.content;
+      }
 
-      case 'validate':
+      case 'validate': {
         if (stage.validator) {
           return stage.validator(input) ? input : null;
         }
@@ -315,24 +317,26 @@ export class AIPipelineOrchestrator {
         const validateRequest: AIRequest = {
           id: crypto.randomUUID(),
           type: 'text',
-          prompt: stage.prompt?.replace('{input}', input) || input,
+          prompt: stage.prompt?.replace('{input}', typeof input === 'string' ? input : JSON.stringify(input)) || (typeof input === 'string' ? input : JSON.stringify(input)),
           provider: stage.provider,
           context
         };
         const validateResponse = await aiBackend.executeRequest(validateRequest);
         return validateResponse.content;
+      }
 
-      case 'aggregate':
+      case 'aggregate': {
         // Aggregate results from multiple sources
         const aggregateRequest: AIRequest = {
           id: crypto.randomUUID(),
           type: 'text',
-          prompt: stage.prompt?.replace('{input}', JSON.stringify(input)) || input,
+          prompt: stage.prompt?.replace('{input}', JSON.stringify(input)) || JSON.stringify(input),
           provider: stage.provider,
           context
         };
         const aggregateResponse = await aiBackend.executeRequest(aggregateRequest);
         return aggregateResponse.content;
+      }
 
       default:
         return input;

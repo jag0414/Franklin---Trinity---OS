@@ -13,14 +13,30 @@ import { VoiceCommand, voiceService } from '@/services/voiceService';
 import { FileUploadExport } from '@/components/FileUploadExport';
 import { AgentResponseWindow } from '@/components/AgentResponseWindow';
 
+interface TaskHistoryItem {
+  id: string;
+  type: string;
+  status: string;
+  timestamp: number;
+  result?: string;
+}
+
+interface ResultItem {
+  id: string;
+  provider?: string;
+  content: string;
+  timestamp: number;
+  type?: string;
+}
+
 export function AICommandCenter() {
   const [prompt, setPrompt] = useState('');
   const [selectedMode, setSelectedMode] = useState('auto');
   const [selectedProvider, setSelectedProvider] = useState('openai');
   const [selectedAgent, setSelectedAgent] = useState('researcher');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [results, setResults] = useState<any[]>([]);
-  const [taskHistory, setTaskHistory] = useState<any[]>([]);
+  const [results, setResults] = useState<ResultItem[]>([]);
+  const [taskHistory, setTaskHistory] = useState<TaskHistoryItem[]>([]);
   const [activeTab, setActiveTab] = useState('command');
   const [lastResponse, setLastResponse] = useState<string>('');
   const [showVoiceAssistant, setShowVoiceAssistant] = useState(true);
@@ -86,8 +102,8 @@ export function AICommandCenter() {
       setPrompt('');
       await loadTaskHistory();
       
-    } catch (error: any) {
-      const errorMessage = error.message || 'Failed to process request';
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to process request';
       setResults(prev => [{
         id: taskId,
         type: 'error',
@@ -138,8 +154,8 @@ export function AICommandCenter() {
       setPrompt('');
       await loadTaskHistory();
       
-    } catch (error: any) {
-      const errorMessage = error.message || 'Agent execution failed';
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Agent execution failed';
       setResults(prev => [{
         id: crypto.randomUUID(),
         type: 'error',
@@ -180,9 +196,10 @@ export function AICommandCenter() {
       }, ...prev].slice(0, 10));
       
       setLastResponse(`The ${pipelineType} pipeline has completed successfully.`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      setLastResponse(`Pipeline execution failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setLastResponse(`Pipeline execution failed: ${errorMessage}`);
     }
     
     setIsProcessing(false);
@@ -190,8 +207,6 @@ export function AICommandCenter() {
 
   // Handle voice commands
   const handleVoiceCommand = useCallback((command: VoiceCommand) => {
-    console.log('Voice command received:', command);
-    
     switch (command.action) {
       case 'execute':
         if (command.parameters?.prompt) {
@@ -244,10 +259,11 @@ export function AICommandCenter() {
         }
         break;
         
-      case 'help':
+      case 'help': {
         const helpMessage = `You can say: Execute followed by your prompt, Use researcher agent, Run pipeline, Stop, Clear, or Read results.`;
         voiceService.speak(helpMessage);
         break;
+      }
         
       default:
         // Treat unknown commands as prompts
