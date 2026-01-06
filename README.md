@@ -94,14 +94,46 @@ npm install
 
 ## 🎯 Features
 
+### AI Orchestration
 - **Multi-Provider AI**: OpenAI GPT-4, Anthropic Claude, Google Gemini, Stability AI
+- **Local LLM Support**: Llama, Mistral, and other local models for offline/fallback operation
+- **Hybrid Agents**: Create custom multi-model agents combining different AI providers
 - **Smart Pipelines**: Pre-configured workflows for content generation, code generation, analysis
 - **Mock Mode**: Instant fake responses for development without API keys
-- **Real Mode**: Automatic activation when valid API keys are detected
+
+### Liquid Workbench Dashboard
+- **VS Studio-Style Interface**: Professional workbench for high-volume AI processing
+- **Large File Upload**: Support for files up to 500MB with intelligent chunking
+- **Real-time Processing**: Live response display with streaming updates
+- **Project Management**: Save and organize your AI projects
+
+### Export & Integration
+- **Microsoft 365**: Export to Excel, Word, PowerPoint, Project formats
+- **Google Workspace**: Export to Google Docs, Sheets, Slides
+- **Notion Integration**: Direct export to Notion format
+- **Audio Export**: Text-to-speech conversion for responses
+- **Image Export**: JPEG generation with visualization
+
+### Knowledge & Learning
+- **Agent Academy**: Knowledge-based pipeline for continuous agent learning
+- **Information Retainer**: Persistent memory loop for agent improvement
+- **Knowledge Base**: Indexed learning materials across multiple domains
+- **Cross-Training**: Agents can learn from each other's experiences
+
+### Monetization & Pricing
+- **Free Chat**: Unlimited chat interface at no cost
+- **Task-Based Pricing**: Pay only for task execution based on complexity
+- **Oracle Analyzer**: AI-powered complexity assessment and cost estimation
+- **Transparent Pricing**: Detailed breakdown of all costs by provider
+- **Multiple Tiers**: Free, Basic ($10/mo), Pro ($50/mo), Enterprise (custom)
+
+### Technical Features
 - **Async Task Queue**: Handle long-running AI operations
 - **Database**: PostgreSQL with SQLModel ORM
 - **Security**: JWT authentication, CORS protection
 - **Monitoring**: Prometheus metrics, health checks
+- **File Chunking**: Intelligent processing of large files
+- **Response Caching**: Reduce API costs with intelligent caching
 
 ## 🏗️ Architecture
 
@@ -134,10 +166,42 @@ See [RAILWAY_VARIABLES.env](RAILWAY_VARIABLES.env) for complete list.
 
 ## 📊 API Endpoints
 
+### Core AI
 - `GET /health` - Health check
 - `GET /api/ai/pipelines` - List available AI pipelines
 - `POST /api/ai/execute` - Execute single AI request
 - `POST /api/ai/pipeline` - Run multi-stage pipeline
+
+### Oracle & Pricing
+- `POST /api/oracle/analyze` - Analyze task complexity and estimate cost
+- `GET /api/oracle/pricing` - Get current pricing structure
+
+### Local LLMs
+- `GET /api/llm/local/list` - List available local LLMs
+- `POST /api/llm/local/register` - Register a new local LLM
+- `POST /api/llm/local/execute` - Execute prompt on local LLM with fallback
+
+### File Management
+- `POST /api/files/upload` - Upload file for processing
+- `POST /api/files/chunk` - Chunk large file
+- `GET /api/files/{file_uuid}/chunks` - Get file chunks
+
+### Export
+- `POST /api/export/microsoft365` - Export to Excel, Word, PowerPoint, Project
+- `POST /api/export/google-workspace` - Export to Google Docs, Sheets
+- `POST /api/export/notion` - Export to Notion format
+
+### Knowledge Base
+- `POST /api/academy/knowledge/add` - Add knowledge entry
+- `GET /api/academy/knowledge/search` - Search knowledge base
+- `GET /api/academy/knowledge/categories` - Get all categories
+
+### Billing
+- `POST /api/billing/transaction` - Create billing transaction
+- `GET /api/billing/transactions` - List transactions
+- `GET /api/billing/summary` - Get billing summary
+
+### Documentation
 - `GET /docs` - Interactive API documentation (Swagger UI)
 
 ## 🤝 Contributing

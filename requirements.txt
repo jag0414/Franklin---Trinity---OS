@@ -21,6 +21,7 @@ websockets
 psutil
 PyJWT
 cryptography
+python-pptx
 
 # Authentication & Security
 python-jose[cryptography]
@@ -32,3 +33,6 @@ sqlalchemy[asyncio]
 asyncpg
 aiosqlite
 alembic
+
+# Local LLM Support
+llama-cpp-python

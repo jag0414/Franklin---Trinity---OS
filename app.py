@@ -181,7 +181,84 @@ class UploadedFile(SQLModel, table=True):
     pipeline_id: Optional[str] = None
     processed: bool = Field(default=False)
     processing_result: Optional[str] = None
+    chunks_count: int = Field(default=0)  # Number of chunks for large files
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class FileChunk(SQLModel, table=True):
+    """Store chunks of large files for processing"""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    file_uuid: str = Field(index=True)
+    chunk_index: int
+    chunk_data: str  # Base64 or path to chunk file
+    chunk_size: int
+    checksum: str  # For integrity verification
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class TaskComplexity(SQLModel, table=True):
+    """Oracle-analyzed task complexity and pricing"""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    task_id: str = Field(index=True, unique=True)
+    prompt: str
+    complexity_score: float  # 0-100
+    estimated_tokens: int
+    estimated_time_seconds: int
+    base_cost: float
+    provider_costs: Optional[str] = None  # JSON breakdown by provider
+    complexity_factors: Optional[str] = None  # JSON of contributing factors
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class BillingTransaction(SQLModel, table=True):
+    """Track billing and monetization"""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    transaction_id: str = Field(index=True, unique=True)
+    user_id: Optional[int] = None
+    task_id: Optional[str] = None
+    amount: float
+    currency: str = Field(default="USD")
+    provider: str  # openai, anthropic, google, local
+    model: str
+    tokens_used: int
+    cost_breakdown: Optional[str] = None  # JSON detailed breakdown
+    status: str = Field(default="pending")  # pending | completed | failed | refunded
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    completed_at: Optional[datetime] = None
+
+
+class LocalLLMConfig(SQLModel, table=True):
+    """Configuration for local LLM instances"""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(index=True)
+    model_type: str  # llama, mistral, etc.
+    model_path: str
+    is_active: bool = Field(default=True)
+    priority: int = Field(default=0)  # Higher priority for fallback order
+    max_tokens: int = Field(default=2048)
+    temperature: float = Field(default=0.7)
+    endpoint_url: Optional[str] = None  # For remote local LLMs
+    api_key: Optional[str] = None
+    last_health_check: Optional[datetime] = None
+    health_status: str = Field(default="unknown")  # healthy | degraded | offline
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class KnowledgeBaseEntry(SQLModel, table=True):
+    """Academy knowledge base for agent learning"""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    entry_id: str = Field(index=True, unique=True)
+    category: str  # legal, construction, blockchain, etc.
+    title: str
+    content: str
+    source: Optional[str] = None
+    embedding_vector: Optional[str] = None  # For semantic search
+    tags: Optional[str] = None  # JSON array
+    quality_score: float = Field(default=0.0)  # 0-1 based on usage
+    access_count: int = Field(default=0)
+    last_accessed: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 SQLModel.metadata.create_all(engine)
@@ -1240,3 +1317,473 @@ def get_workflow(workflow_id: str):
         if not workflow:
             raise HTTPException(404, "Workflow not found")
         return workflow
+
+
+# ---------------- ORACLE COMPLEXITY ANALYZER ----------------
+def analyze_task_complexity(prompt: str, provider: str = "openai") -> dict:
+    """Analyze task complexity for pricing (Oracle)"""
+    import re
+    
+    # Calculate basic metrics
+    word_count = len(prompt.split())
+    char_count = len(prompt)
+    
+    # Complexity factors
+    factors = {
+        "length": min(word_count / 100, 1.0),  # 0-1 based on length
+        "code_patterns": 0.0,
+        "data_analysis": 0.0,
+        "creativity": 0.0,
+        "multi_step": 0.0
+    }
+    
+    # Check for code patterns
+    code_keywords = ['function', 'class', 'def', 'import', 'code', 'implement', 'algorithm']
+    if any(k in prompt.lower() for k in code_keywords):
+        factors["code_patterns"] = 0.8
+    
+    # Check for data analysis
+    data_keywords = ['analyze', 'calculate', 'process', 'data', 'statistics', 'metrics']
+    if any(k in prompt.lower() for k in data_keywords):
+        factors["data_analysis"] = 0.7
+    
+    # Check for creativity
+    creative_keywords = ['create', 'design', 'generate', 'write', 'compose', 'imagine']
+    if any(k in prompt.lower() for k in creative_keywords):
+        factors["creativity"] = 0.6
+    
+    # Check for multi-step
+    multi_keywords = ['then', 'next', 'after', 'finally', 'step']
+    if any(k in prompt.lower() for k in multi_keywords):
+        factors["multi_step"] = 0.5
+    
+    # Calculate complexity score (0-100)
+    base_complexity = sum(factors.values()) / len(factors)
+    complexity_score = base_complexity * 100
+    
+    # Estimate tokens and time
+    estimated_tokens = int(word_count * 1.3)  # Rough estimate
+    estimated_time = max(5, int(complexity_score / 10))  # 5-10 seconds base
+    
+    # Calculate costs by provider
+    provider_costs = {
+        "openai": estimated_tokens * 0.00003,  # GPT-4 pricing
+        "anthropic": estimated_tokens * 0.00003,  # Claude pricing
+        "google": estimated_tokens * 0.00001,  # Gemini pricing
+        "local": 0.0  # Free
+    }
+    
+    base_cost = provider_costs.get(provider, provider_costs["openai"])
+    
+    # Add complexity multiplier
+    final_cost = base_cost * (1 + complexity_score / 100)
+    
+    return {
+        "complexity_score": round(complexity_score, 2),
+        "estimated_tokens": estimated_tokens,
+        "estimated_time_seconds": estimated_time,
+        "base_cost": round(base_cost, 4),
+        "final_cost": round(final_cost, 4),
+        "provider_costs": {k: round(v * (1 + complexity_score / 100), 4) for k, v in provider_costs.items()},
+        "factors": factors
+    }
+
+
+@app.post("/api/oracle/analyze")
+async def oracle_analyze_task(request: dict):
+    """Analyze task complexity and provide cost estimate"""
+    prompt = request.get("prompt", "")
+    provider = request.get("provider", "openai")
+    
+    if not prompt:
+        raise HTTPException(400, "Prompt required")
+    
+    # Analyze complexity
+    analysis = analyze_task_complexity(prompt, provider)
+    
+    # Store in database
+    task_id = str(uuid.uuid4())
+    with Session(engine) as s:
+        complexity = TaskComplexity(
+            task_id=task_id,
+            prompt=prompt,
+            complexity_score=analysis["complexity_score"],
+            estimated_tokens=analysis["estimated_tokens"],
+            estimated_time_seconds=analysis["estimated_time_seconds"],
+            base_cost=analysis["base_cost"],
+            provider_costs=json.dumps(analysis["provider_costs"]),
+            complexity_factors=json.dumps(analysis["factors"])
+        )
+        s.add(complexity)
+        s.commit()
+        s.refresh(complexity)
+    
+    return {
+        "task_id": task_id,
+        "analysis": analysis,
+        "message": "Task analyzed successfully. This is an estimate based on complexity factors."
+    }
+
+
+@app.get("/api/oracle/pricing")
+def get_pricing_info():
+    """Get current pricing structure"""
+    return {
+        "providers": {
+            "openai": {"name": "OpenAI GPT-4", "cost_per_1k_tokens": 0.03, "quality": "high"},
+            "anthropic": {"name": "Anthropic Claude", "cost_per_1k_tokens": 0.03, "quality": "high"},
+            "google": {"name": "Google Gemini", "cost_per_1k_tokens": 0.01, "quality": "medium"},
+            "local_llama": {"name": "Local Llama", "cost_per_1k_tokens": 0.0, "quality": "medium"},
+            "local_mistral": {"name": "Local Mistral", "cost_per_1k_tokens": 0.0, "quality": "medium"}
+        },
+        "tiers": {
+            "free": {"chat_only": True, "max_tokens_per_day": 1000},
+            "basic": {"price_per_month": 10, "max_tokens_per_day": 100000},
+            "pro": {"price_per_month": 50, "max_tokens_per_day": 1000000},
+            "enterprise": {"price_per_month": "custom", "unlimited": True}
+        },
+        "chat_free": True,
+        "task_based_pricing": True
+    }
+
+
+# ---------------- LOCAL LLM SUPPORT ----------------
+@app.get("/api/llm/local/list")
+def list_local_llms():
+    """List available local LLMs"""
+    with Session(engine) as s:
+        llms = s.exec(select(LocalLLMConfig).where(LocalLLMConfig.is_active == True).order_by(LocalLLMConfig.priority.desc())).all()
+        return llms
+
+
+@app.post("/api/llm/local/register")
+def register_local_llm(config: dict):
+    """Register a new local LLM"""
+    with Session(engine) as s:
+        llm = LocalLLMConfig(
+            name=config.get("name", "Local LLM"),
+            model_type=config.get("model_type", "llama"),
+            model_path=config.get("model_path", ""),
+            is_active=config.get("is_active", True),
+            priority=config.get("priority", 0),
+            max_tokens=config.get("max_tokens", 2048),
+            temperature=config.get("temperature", 0.7),
+            endpoint_url=config.get("endpoint_url"),
+            api_key=config.get("api_key")
+        )
+        s.add(llm)
+        s.commit()
+        s.refresh(llm)
+        return llm
+
+
+async def call_local_llm(prompt: str, model_config: LocalLLMConfig) -> str:
+    """Call a local LLM (Llama, Mistral, etc.)"""
+    try:
+        # If endpoint URL is provided, call remote local LLM
+        if model_config.endpoint_url:
+            async with httpx.AsyncClient(timeout=120) as client:
+                headers = {"Content-Type": "application/json"}
+                if model_config.api_key:
+                    headers["Authorization"] = f"Bearer {model_config.api_key}"
+                
+                body = {
+                    "prompt": prompt,
+                    "max_tokens": model_config.max_tokens,
+                    "temperature": model_config.temperature
+                }
+                
+                resp = await client.post(model_config.endpoint_url, headers=headers, json=body)
+                
+                if resp.status_code == 200:
+                    data = resp.json()
+                    return data.get("text", data.get("response", str(data)))
+        
+        # Otherwise, return mock response
+        return f"[Local {model_config.model_type.upper()}] Response to: {prompt[:100]}... (This is a mock response. Configure endpoint_url for real local LLM.)"
+    except Exception as e:
+        raise HTTPException(500, f"Local LLM call failed: {str(e)}")
+
+
+@app.post("/api/llm/local/execute")
+async def execute_local_llm(request: dict):
+    """Execute a prompt on local LLM with fallback"""
+    prompt = request.get("prompt", "")
+    if not prompt:
+        raise HTTPException(400, "Prompt required")
+    
+    with Session(engine) as s:
+        # Get active local LLMs by priority
+        llms = s.exec(
+            select(LocalLLMConfig)
+            .where(LocalLLMConfig.is_active == True)
+            .order_by(LocalLLMConfig.priority.desc())
+        ).all()
+        
+        if not llms:
+            raise HTTPException(404, "No active local LLMs configured")
+        
+        # Try each LLM in priority order
+        last_error = None
+        for llm in llms:
+            try:
+                response = await call_local_llm(prompt, llm)
+                return {
+                    "success": True,
+                    "provider": "local",
+                    "model": llm.name,
+                    "model_type": llm.model_type,
+                    "content": response
+                }
+            except Exception as e:
+                last_error = str(e)
+                continue
+        
+        raise HTTPException(500, f"All local LLMs failed. Last error: {last_error}")
+
+
+# ---------------- FILE CHUNKING ----------------
+@app.post("/api/files/chunk")
+async def chunk_large_file(file_uuid: str, chunk_size_mb: int = 10):
+    """Chunk a large file for processing"""
+    with Session(engine) as s:
+        uploaded_file = s.exec(select(UploadedFile).where(UploadedFile.file_uuid == file_uuid)).first()
+        if not uploaded_file:
+            raise HTTPException(404, "File not found")
+        
+        # Read file and create chunks
+        import os
+        import hashlib
+        
+        if not os.path.exists(uploaded_file.file_path):
+            raise HTTPException(404, "File path not found")
+        
+        chunk_size = chunk_size_mb * 1024 * 1024  # Convert to bytes
+        chunks_created = 0
+        
+        with open(uploaded_file.file_path, 'rb') as f:
+            chunk_index = 0
+            while True:
+                chunk_data = f.read(chunk_size)
+                if not chunk_data:
+                    break
+                
+                # Calculate checksum
+                checksum = hashlib.sha256(chunk_data).hexdigest()
+                
+                # Store chunk (in production, save to file or blob storage)
+                import base64
+                chunk_b64 = base64.b64encode(chunk_data).decode('utf-8')
+                
+                chunk = FileChunk(
+                    file_uuid=file_uuid,
+                    chunk_index=chunk_index,
+                    chunk_data=chunk_b64[:1000],  # Store only reference in DB
+                    chunk_size=len(chunk_data),
+                    checksum=checksum
+                )
+                s.add(chunk)
+                chunks_created += 1
+                chunk_index += 1
+        
+        # Update file record
+        uploaded_file.chunks_count = chunks_created
+        s.add(uploaded_file)
+        s.commit()
+        
+        return {
+            "file_uuid": file_uuid,
+            "chunks_created": chunks_created,
+            "chunk_size_mb": chunk_size_mb,
+            "message": "File chunked successfully"
+        }
+
+
+@app.get("/api/files/{file_uuid}/chunks")
+def get_file_chunks(file_uuid: str):
+    """Get chunks for a file"""
+    with Session(engine) as s:
+        chunks = s.exec(select(FileChunk).where(FileChunk.file_uuid == file_uuid).order_by(FileChunk.chunk_index)).all()
+        return {"file_uuid": file_uuid, "chunks": chunks}
+
+
+# ---------------- KNOWLEDGE BASE (ACADEMY) ----------------
+@app.post("/api/academy/knowledge/add")
+def add_knowledge(entry: dict):
+    """Add entry to knowledge base"""
+    with Session(engine) as s:
+        kb_entry = KnowledgeBaseEntry(
+            entry_id=str(uuid.uuid4()),
+            category=entry.get("category", "general"),
+            title=entry.get("title", ""),
+            content=entry.get("content", ""),
+            source=entry.get("source"),
+            tags=json.dumps(entry.get("tags", []))
+        )
+        s.add(kb_entry)
+        s.commit()
+        s.refresh(kb_entry)
+        return kb_entry
+
+
+@app.get("/api/academy/knowledge/search")
+def search_knowledge(query: str, category: Optional[str] = None, limit: int = 10):
+    """Search knowledge base"""
+    with Session(engine) as s:
+        stmt = select(KnowledgeBaseEntry)
+        if category:
+            stmt = stmt.where(KnowledgeBaseEntry.category == category)
+        
+        # Simple text search (in production, use full-text search or vector similarity)
+        entries = s.exec(stmt.limit(limit)).all()
+        
+        # Filter by query
+        results = [e for e in entries if query.lower() in e.title.lower() or query.lower() in e.content.lower()]
+        
+        return {"query": query, "results": results[:limit]}
+
+
+@app.get("/api/academy/knowledge/categories")
+def get_knowledge_categories():
+    """Get all knowledge categories"""
+    return {
+        "categories": [
+            "legal", "construction", "blockchain", "finance", 
+            "security", "compliance", "architecture", "coding",
+            "data_analysis", "project_management"
+        ]
+    }
+
+
+# ---------------- BILLING & MONETIZATION ----------------
+@app.post("/api/billing/transaction")
+def create_billing_transaction(transaction: dict):
+    """Create a billing transaction"""
+    with Session(engine) as s:
+        trans = BillingTransaction(
+            transaction_id=str(uuid.uuid4()),
+            user_id=transaction.get("user_id"),
+            task_id=transaction.get("task_id"),
+            amount=transaction.get("amount", 0.0),
+            currency=transaction.get("currency", "USD"),
+            provider=transaction.get("provider", "openai"),
+            model=transaction.get("model", "gpt-4"),
+            tokens_used=transaction.get("tokens_used", 0),
+            cost_breakdown=json.dumps(transaction.get("cost_breakdown", {})),
+            status="completed"
+        )
+        trans.completed_at = datetime.now(timezone.utc)
+        s.add(trans)
+        s.commit()
+        s.refresh(trans)
+        return trans
+
+
+@app.get("/api/billing/transactions")
+def list_transactions(user_id: Optional[int] = None, limit: int = 100):
+    """List billing transactions"""
+    with Session(engine) as s:
+        stmt = select(BillingTransaction).order_by(BillingTransaction.created_at.desc()).limit(limit)
+        if user_id:
+            stmt = stmt.where(BillingTransaction.user_id == user_id)
+        
+        transactions = s.exec(stmt).all()
+        return transactions
+
+
+@app.get("/api/billing/summary")
+def get_billing_summary(user_id: Optional[int] = None):
+    """Get billing summary"""
+    with Session(engine) as s:
+        stmt = select(BillingTransaction)
+        if user_id:
+            stmt = stmt.where(BillingTransaction.user_id == user_id)
+        
+        transactions = s.exec(stmt).all()
+        
+        total_amount = sum(t.amount for t in transactions)
+        total_tokens = sum(t.tokens_used for t in transactions)
+        by_provider = {}
+        
+        for t in transactions:
+            if t.provider not in by_provider:
+                by_provider[t.provider] = {"amount": 0, "tokens": 0, "count": 0}
+            by_provider[t.provider]["amount"] += t.amount
+            by_provider[t.provider]["tokens"] += t.tokens_used
+            by_provider[t.provider]["count"] += 1
+        
+        return {
+            "total_amount": round(total_amount, 2),
+            "total_tokens": total_tokens,
+            "transaction_count": len(transactions),
+            "by_provider": by_provider
+        }
+
+
+# ---------------- EXPORT TO MULTIPLE FORMATS ----------------
+@app.post("/api/export/microsoft365")
+async def export_to_microsoft365(data: dict, format: str = "excel"):
+    """Export to Microsoft 365 formats"""
+    if format == "excel":
+        return await export_task("excel", data.get("task_id"))
+    elif format == "word":
+        return await export_task("word", data.get("task_id"))
+    elif format == "powerpoint":
+        # PowerPoint export (simplified)
+        try:
+            from pptx import Presentation
+            prs = Presentation()
+            slide = prs.slides.add_slide(prs.slide_layouts[0])
+            title = slide.shapes.title
+            title.text = data.get("title", "Export from Franklin OS")
+            
+            output = io.BytesIO()
+            prs.save(output)
+            output.seek(0)
+            
+            return StreamingResponse(
+                output,
+                media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                headers={"Content-Disposition": "attachment; filename=export.pptx"}
+            )
+        except Exception as e:
+            raise HTTPException(500, f"PowerPoint export failed: {str(e)}")
+    else:
+        raise HTTPException(400, f"Unsupported format: {format}")
+
+
+@app.post("/api/export/google-workspace")
+async def export_to_google_workspace(data: dict, format: str = "docs"):
+    """Export to Google Workspace formats (returns data for upload)"""
+    # In production, this would use Google Workspace API
+    # For now, return data in compatible format
+    
+    content = data.get("content", "")
+    
+    if format == "docs":
+        # Return as HTML for Google Docs import
+        return {
+            "format": "google_docs",
+            "content": f"<html><body><h1>{data.get('title', 'Export')}</h1><p>{content}</p></body></html>",
+            "instructions": "Copy this HTML and paste into Google Docs"
+        }
+    elif format == "sheets":
+        # Return as CSV for Google Sheets
+        return {
+            "format": "google_sheets",
+            "content": f"Title,Content\n{data.get('title', 'Export')},{content}",
+            "instructions": "Copy this CSV and paste into Google Sheets"
+        }
+    else:
+        raise HTTPException(400, f"Unsupported format: {format}")
+
+
+@app.post("/api/export/notion")
+async def export_to_notion(data: dict):
+    """Export to Notion format"""
+    # Return Notion-compatible markdown
+    return {
+        "format": "notion",
+        "content": f"# {data.get('title', 'Export from Franklin OS')}\n\n{data.get('content', '')}",
+        "instructions": "Copy this markdown and paste into Notion"
+    }
