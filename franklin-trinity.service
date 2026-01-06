@@ -1,0 +1,46 @@
+[Unit]
+Description=Franklin Trinity OS - AI Orchestration Platform
+Documentation=https://github.com/jag0414/Franklin---Trinity---OS
+After=network.target
+
+[Service]
+Type=forking
+User=%i
+Group=%i
+WorkingDirectory=/opt/franklin-trinity-os
+Environment="PATH=/usr/bin:/usr/local/bin"
+Environment="BACKEND_PORT=8000"
+Environment="FRONTEND_PORT=8080"
+Environment="AUTO_RESTART=true"
+EnvironmentFile=-/opt/franklin-trinity-os/.env
+
+# Start command
+ExecStart=/opt/franklin-trinity-os/auto-launch.sh start
+
+# Stop command
+ExecStop=/opt/franklin-trinity-os/auto-launch.sh stop
+
+# Restart policy
+Restart=always
+RestartSec=10
+StartLimitInterval=300
+StartLimitBurst=5
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/franklin-trinity-os/logs /opt/franklin-trinity-os/pids /opt/franklin-trinity-os/uploads
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=franklin-trinity
+
+[Install]
+WantedBy=multi-user.target

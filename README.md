@@ -52,13 +52,31 @@ A FastAPI-powered AI orchestration platform with support for OpenAI, Anthropic, 
 
 ## 📖 Documentation
 
+- **[AUTOMATION.md](AUTOMATION.md)** - 🚀 Full automation mode guide (NEW!)
 - **[PRODUCTION_READY.md](PRODUCTION_READY.md)** - Complete deployment checklist
 - **[FINAL_DEPLOYMENT_GUIDE.md](FINAL_DEPLOYMENT_GUIDE.md)** - Step-by-step guide with troubleshooting
 - **[RAILWAY_VARIABLES.env](RAILWAY_VARIABLES.env)** - Environment variables template
 
 ## 🏃 Local Development
 
-### Backend
+### 🚀 Full Automation Mode (Recommended)
+
+```bash
+# One command to rule them all - auto-installs, monitors, and restarts
+./auto-launch.sh start
+```
+
+**Features:**
+- ✅ Automatic dependency installation
+- ✅ Health monitoring with auto-restart
+- ✅ Centralized logging
+- ✅ Easy management (start/stop/restart/status)
+
+See **[AUTOMATION.md](AUTOMATION.md)** for complete automation guide.
+
+### Manual Start (Development)
+
+#### Backend
 ```powershell
 # Install Python dependencies
 pip install -r requirements.txt
@@ -68,7 +86,7 @@ pip install -r requirements.txt
 # Or manually: python -m uvicorn app:app --reload --port 8000
 ```
 
-### Frontend
+#### Frontend
 ```powershell
 # Install Node dependencies
 npm install
@@ -78,7 +96,7 @@ npm install
 # Or manually: npm run dev
 ```
 
-### Run Both
+#### Run Both
 ```powershell
 .\Start_All.ps1
 ```
