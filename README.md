@@ -4,6 +4,22 @@
 
 A FastAPI-powered AI orchestration platform with support for OpenAI, Anthropic, Google Gemini, and Stability AI. Features intelligent pipeline execution, multi-agent workflows, and automatic fallback to mock mode for development.
 
+## ✅ Recent Updates (December 2024)
+
+### System Health & Fixes
+- ✅ **Database Connection**: Fixed SQLAlchemy text expression warnings
+- ✅ **API Deprecations**: Migrated to modern FastAPI lifespan handlers
+- ✅ **Build Artifacts**: Cleaned up committed .pyc, .dll, and .db files
+- ✅ **Security**: Enhanced .gitignore and documented security considerations
+- ✅ **Validation**: Added `validate_system.py` for easy health checks
+
+Run system validation anytime:
+```bash
+python validate_system.py
+```
+
+See [SECURITY_NOTES.md](SECURITY_NOTES.md) for security details and npm vulnerability information.
+
 ## 🚀 Quick Start - Railway Deployment
 
 ### Prerequisites

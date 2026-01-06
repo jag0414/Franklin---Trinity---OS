@@ -53,6 +53,15 @@ __pycache__/
 .venv/
 venv/
 ENV/
+*.db
+*.sqlite
+*.sqlite3
+
+# Compiled files
+*.dll
+*.so
+*.dylib
+*.exe
 
 # Visual Studio
 .vs/
